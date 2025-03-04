@@ -6,18 +6,18 @@ const multer = require("multer");
 
 //Create a new car listing :
 const CreateNewCarId = async (req, res) => {
-  // const { token } = req.headers;
-  // if (!token) {
-  //   return res
-  //     .status(401)
-  //     .json({ error: "token in not found or expired please login" });
-  // }
+  const { token } = req.headers;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ error: "token in not found or expired please login" });
+  }
 
   try {
-    // const decode = jwt.verify(token, process.env.JWT_SECRET);
-    // if (!decode) {
-    //   return res.status(401).json({ error: "user Authentication failed " });
-    // }
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decode) {
+      return res.status(401).json({ error: "user Authentication failed " });
+    }
     const {
       brand,
       model,
@@ -59,7 +59,7 @@ const CreateNewCarId = async (req, res) => {
       condition,
       location,
       sellerContact,
-      images : imagePaths,
+      images: imagePaths,
       description,
     });
     await cars.save();
@@ -83,7 +83,7 @@ const GetAllCarsList = async (req, res) => {
 };
 
 //get a specific car details based on ID :
-const GetCarsById = async (req, res) => {
+const GetSpecificCarsById = async (req, res) => {
   try {
     const id = req.headers.id;
     if (!id) {
@@ -102,11 +102,21 @@ const GetCarsById = async (req, res) => {
 
 //update a car by using car ID :
 const UpdateCarUsingID = async (req, res) => {
-  const { id } = req.cookies;
+  const { token } = req.headers;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ error: "token in not found or expired please login" });
+  }
+  const { id } = req.params;
   if (!id) {
     res.status(401).json({ error: "id not found" });
   }
   try {
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decode) {
+      return res.status(401).json({ error: "user Authentication failed " });
+    }
     const car = await carsDB.findById({ id });
     if (!car) {
       res.status(404).json({ error: "no car found on this ID" });
@@ -120,11 +130,21 @@ const UpdateCarUsingID = async (req, res) => {
 
 //remove a car from the listing :
 const RemoveCarUsinfID = async (req, res) => {
-  const { id } = req.params;
+  const { token } = req.headers;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ error: "token in not found or expired please login" });
+  }
+  const  id  = req.params;
   if (!id) {
     res.status(400).json({ error: "id not found in the params" });
   }
   try {
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decode) {
+      return res.status(401).json({ error: "user Authentication failed " });
+    }
     const deleteCar = await carsDB.findByIdAndDelete({ id });
     if (!deleteCar) {
       return res.status(404).json({ error: "car not found" });
@@ -159,7 +179,7 @@ const SearchCarUsingDetails = async (req, res) => {
 
 module.exports = {
   GetAllCarsList,
-  GetCarsById,
+  GetSpecificCarsById,
   CreateNewCarId,
   UpdateCarUsingID,
   RemoveCarUsinfID,
