@@ -8,18 +8,18 @@ const { array } = require("joi");
 
 //Create a new car listing :
 const CreateNewCarId = async (req, res) => {
-  // const { token } = req.headers;
-  // if (!token) {
-  //   return res
-  //     .status(401)
-  //     .json({ error: "token in not found or expired please login" });
-  // }
+  const { token } = req.cookies;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ error: "token in not found or expired please login" });
+  }
 
   try {
-    // const decode = jwt.verify(token, process.env.JWT_SECRET);
-    // if (!decode) {
-    //   return res.status(401).json({ error: "user Authentication failed " });
-    // }
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decode) {
+      return res.status(401).json({ error: "user Authentication failed " });
+    }
     const {
       brand,
       model,
@@ -104,7 +104,7 @@ const GetSpecificCarsById = async (req, res) => {
 
 //update a car by using car ID :
 const UpdateCarUsingID = async (req, res) => {
-  const { token } = req.headers;
+  const { token } = req.cookies;
   if (!token) {
     return res
       .status(401)

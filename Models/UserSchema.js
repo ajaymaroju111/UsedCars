@@ -1,3 +1,4 @@
+const e = require('express');
 const mongoose = require('mongoose');
 
 const userData = new mongoose.Schema({
@@ -11,6 +12,11 @@ const userData = new mongoose.Schema({
   lastname : {
     type : String,
     required : true,
+  },
+  role : {
+    type : String,
+    enum : ['admin' , 'user' , 'tenant'],
+    default : 'user',
   },
   email : {
     type : String,
@@ -33,6 +39,11 @@ const userData = new mongoose.Schema({
   },
   phone : {
     type : Number,
+  },
+  status : {
+    type : String,
+    enum : ['active' , 'inactive'],
+    default : 'active',
   },
   otp : {
     type : String,

@@ -3,15 +3,19 @@ const mongoose = require('mongoose');
 const TenantsSchema = new mongoose.Schema({
   username : {
     type : String,
-    require : true,
+    required : true,
   },
-  TenentId : {
+  aadhar : {
     type : String,
     required : true
   },
   email : {
     type : String,
     required : true,
+  },
+  business : {
+    type : String,
+    required : true
   },
   password : {
     type : String,
@@ -35,6 +39,5 @@ const TenantsSchema = new mongoose.Schema({
     type : Date,
   },
 },{timestamps: true});
-
 
 module.exports = mongoose.model('TenantsData', TenantsSchema);

@@ -7,7 +7,6 @@ const {JoiTenantRegisterSchema,
 
 } = require('../Joi/Joi.js');
 const {
-  registerOtpTemplate,
   AfterConformRegisterEmail,
 } = require("../Nodemailer/MailTemplates/Templates.js");
 const TenantsMeta = require('../Models/Tenants/TenantsMeta.js');
@@ -42,16 +41,17 @@ const TenantRegister = async (req, res) => {
       Address,
     });
     await Tentuser.save();
-    const registerOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    const TenantMeta = await TenantsMeta.create({
+      id: Tentuser._id,
+      email: Tentuser.email,
+    });
+    await TenantMeta.save();
+    //send the successfull message :
     await sendEmail({
       to: Tentuser.email,
-      subject: "OTP verification for registration process of UsedCars",
-      text: registerOtpTemplate(Tentuser.username, registerOTP),
+      subject: "Welcome to the UsedCars Platform",
+      text: AfterConformRegisterEmail(Tentuser.username),
     });
-    Tentuser.expiresTime = Date.now() + 10 * 60 * 1000;
-    const hashedOTP = await bcrypt.hash(registerOTP, 10);
-    Tentuser.otp = hashedOTP;
-    await Tentuser.save();
     return res
       .status(200)
       .json({ message: "User registered and OTP has send to the email" });
@@ -90,18 +90,9 @@ const ConformTenantRegistration = async (req, res) => {
     if (!MatchOtp) {
       returnres.status(400).json({ NoMatch: "OTP does not match" });
     }
-    const TenantMeta = await TenantsMeta.create({
-      id: Tentuser._id,
-      email: Tentuser.email,
-    });
-    await TenantMeta.save();
+   
     Tentuser.expiresTime = undefined; //free the otp variable :
-    //send the successfull message :
-    await sendEmail({
-      to: Tentuser.email,
-      subject: "Welcome to the UsedCars Platform",
-      text: AfterConformRegisterEmail(Tentuser.username),
-    });
+    
     Tentuser.otp = undefined;
     await Tentuser.save();
     return res

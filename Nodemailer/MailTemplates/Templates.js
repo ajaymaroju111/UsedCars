@@ -118,7 +118,6 @@ const AfterConformRegisterEmail = (Fullname) =>{
     `
 }
 
-
 //template for the login OTP : 
 const LoginOtpTemplate = (fullname , otp) =>{
     return `
@@ -416,5 +415,41 @@ input[type="email"] {
 </body>  
 </html>  
   `
-}  
-module.exports = {registerOtpTemplate , AfterConformRegisterEmail, LoginOtpTemplate, forgetPasswordTemplate};
+} 
+
+const AccountConformationafterRegister = (Fullname) =>{
+  return `
+  <!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Verification Button</title>  
+    <style>  
+        .verify-button {  
+            display: inline-block;  
+            padding: 10px 20px;  
+            font-size: 16px;  
+            color: white;  
+            background-color: #4CAF50; /* Green */  
+            border: none;  
+            border-radius: 5px;  
+            text-decoration: none;  
+            transition: background-color 0.3s;  
+        }  
+
+        .verify-button:hover {  
+            background-color: #45a049; /* Darker green */  
+        }  
+    </style>  
+</head>  
+<body>  
+<h2>Dear ${Fullname},</h2>
+<p>Thank you for registering. Please click the button below to verify your account.</p>
+<a href="your-verification-link.com" class="verify-button">Verify Account</a> 
+
+</body>  
+</html>  
+  `
+}
+module.exports = {registerOtpTemplate , AfterConformRegisterEmail, LoginOtpTemplate, forgetPasswordTemplate, AccountConformationafterRegister};
