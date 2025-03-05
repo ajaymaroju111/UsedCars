@@ -3,21 +3,23 @@ const bcrypt = require("bcrypt");
 const carsDB = require("../Models/CarsSchema.js");
 require("dotenv").config();
 const multer = require("multer");
+const upload = require("../Multer/multer.js");
+const { array } = require("joi");
 
 //Create a new car listing :
 const CreateNewCarId = async (req, res) => {
-  const { token } = req.headers;
-  if (!token) {
-    return res
-      .status(401)
-      .json({ error: "token in not found or expired please login" });
-  }
+  // const { token } = req.headers;
+  // if (!token) {
+  //   return res
+  //     .status(401)
+  //     .json({ error: "token in not found or expired please login" });
+  // }
 
   try {
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ error: "user Authentication failed " });
-    }
+    // const decode = jwt.verify(token, process.env.JWT_SECRET);
+    // if (!decode) {
+    //   return res.status(401).json({ error: "user Authentication failed " });
+    // }
     const {
       brand,
       model,
@@ -180,7 +182,7 @@ const SearchCarUsingDetails = async (req, res) => {
 module.exports = {
   GetAllCarsList,
   GetSpecificCarsById,
-  CreateNewCarId,
+  CreateNewCarId : [upload.array('images', 10), CreateNewCarId],
   UpdateCarUsingID,
   RemoveCarUsinfID,
   SearchCarUsingDetails,
