@@ -163,8 +163,8 @@ const SearchCarUsingDetails = async (req, res) => {
   const { brand, model, price, location } = req.body;
   try {
     let filters = {};
-    //all the filters conditions  :
-    if (model) filters.model = { $regex: model, $options: "i" }; // Case-insensitive search
+    //all the filters conditions :    // Case-insensitive search
+    if (model) filters.model = { $regex: model, $options: "i" };
     if (brand) filters.brand = { $regex: brand, $options: "i" };
     if (location) filters.location = { $regex: location, $options: "i" };
     if (price) filters.price = Number(price);
