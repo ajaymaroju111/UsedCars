@@ -56,10 +56,22 @@ const CarsSchema = new mongoose.Schema({
     { type: String, 
       required: true 
     }
-  }, // Seller details
-  images: [{data: Buffer, contentType: String}], // Array of image URLs
-  description: { type: String }, // Additional car details
-  dateListed: { type: Date, default: Date.now } // Date added
+  }, 
+  images: 
+  {    
+    name: String,
+    img: {
+        data: Buffer, // Binary image data
+        contentType: String // Image type (jpeg/png)
+    }
+  }, 
+  description: { 
+    type: String 
+  }, 
+  dateListed: { 
+    type: Date, 
+    default: Date.now 
+  }
   },
   { timestamps: true }
 );

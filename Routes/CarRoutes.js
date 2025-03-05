@@ -8,6 +8,8 @@ const {
   RemoveCarUsinfID
 
 } = require("../Middlewares/CarsAuth.js");
+const isAdminOrTenant = require("../Middlewares/AdminOrTenant/AdminOrTenant.js");
+//using the multer for the image uploading :
 const upload = require("../Multer/multer.js");
 //using the body parser for the json data : 
 router.use(express.json());
@@ -18,11 +20,11 @@ router.use(cookieParser());
 
 
 //using Routes for the cars : 
-router.post('/',upload.array("images", 5),CreateNewCarId );
+router.post('/',isAdminOrTenant,upload.single('image'),CreateNewCarId );
 router.get('/' ,GetAllCarsList );
 router.get('/:id' ,GetSpecificCarsById );
-router.put('/:id' ,UpdateCarUsingID );
-router.delete('/:id' ,RemoveCarUsinfID );
+router.put('/:id',isAdminOrTenant ,UpdateCarUsingID );
+router.delete('/:id',isAdminOrTenant ,RemoveCarUsinfID );
 router.get('/search' ,RemoveCarUsinfID );
 
 

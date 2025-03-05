@@ -2,6 +2,13 @@ const e = require('express');
 const mongoose = require('mongoose');
 
 const userData = new mongoose.Schema({
+  profileImage : {
+    name: String,
+    img: {
+        data: Buffer, // Binary image data
+        contentType: String // Image type (jpeg/png)
+    }
+  },
   firstname : {
     type : String,
     required : true,
@@ -44,15 +51,7 @@ const userData = new mongoose.Schema({
     type : String,
     enum : ['active' , 'inactive'],
     default : 'active',
-  },
-  otp : {
-    type : String,
-    required : false,
-  },
-  expiryTime : {
-    type : Date,
-    required : false,
   }
-});
+} , {timestamps : true });
 
 module.exports = mongoose.model('Data' , userData);

@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 
 const TenantsSchema = new mongoose.Schema({
+  profileImage : {
+    name: String,
+    img: {
+        data: Buffer, // Binary image data
+        contentType: String // Image type (jpeg/png)
+    }
+
+  },
   username : {
     type : String,
     required : true,
@@ -32,12 +40,11 @@ const TenantsSchema = new mongoose.Schema({
     type : String,
     required : true
   },
-  otp : {
+  status : {
     type : String,
-  },
-  expiresTime : {
-    type : Date,
-  },
+    enum : ['active' , 'inactive'],
+    default : 'active',
+  }
 },{timestamps: true});
 
 module.exports = mongoose.model('TenantsData', TenantsSchema);

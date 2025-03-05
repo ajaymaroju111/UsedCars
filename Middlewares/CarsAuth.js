@@ -49,7 +49,6 @@ const CreateNewCarId = async (req, res) => {
       return res.status(400).json({ error: "All fields are required!" });
     }
     // Extract file paths of uploaded images
-    const imagePaths = req.files.map((file) => file.path);
     const cars = await carsDB.create({
       brand,
       model,
@@ -61,7 +60,12 @@ const CreateNewCarId = async (req, res) => {
       condition,
       location,
       sellerContact,
-      images: imagePaths,
+      images: {
+        name : req.file.originalname,
+       img: {
+           data: req.file.buffer, // Store buffer data
+           contentType: req.file.mimetype
+       }},
       description,
     });
     await cars.save();
@@ -182,7 +186,7 @@ const SearchCarUsingDetails = async (req, res) => {
 module.exports = {
   GetAllCarsList,
   GetSpecificCarsById,
-  CreateNewCarId : [upload.array('images', 10), CreateNewCarId],
+  CreateNewCarId,
   UpdateCarUsingID,
   RemoveCarUsinfID,
   SearchCarUsingDetails,
