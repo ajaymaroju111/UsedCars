@@ -1,9 +1,7 @@
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+const dotenv = require("dotenv");
+dotenv.config();
 const carsDB = require("../Models/CarsSchema.js");
-require("dotenv").config();
-const multer = require("multer");
-const upload = require("../Multer/multer.js");
 
 // Create a new car listing :
 const CreateNewCarId = async (req, res) => {

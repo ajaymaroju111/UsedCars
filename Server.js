@@ -1,19 +1,19 @@
 const express = require('express');
-const dotenv = require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config();
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const Authroutes = require('./Routes/Authroutes.js');
 const TenantRoutes = require('./Routes/TenantRoutes.js');
-const CarRoutes = require('./Routes/CarRoutes.js')
+const CarRoutes = require('./Routes/CarRoutes.js');
 const connectDB = require('./Databases/DBconnect.js');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
-const Port = process.env.PORT || 0 ;
+const Port = process.env.PORT || 0;
 
 connectDB();
 
 const app = express();
-
 
 //using express limiter for the 
 const limiter = rateLimit({
@@ -26,9 +26,7 @@ const limiter = rateLimit({
 // Apply rate limiting to all requests
 app.use(limiter);
 
-
 //middlewares 
-
 app.use(cors({
   origin: "http://localhost:3000",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -37,15 +35,15 @@ app.use(cors({
 }));
 
 app.use(bodyParser.json());
-app.use(express.urlencoded({extended : false}));
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 //Using routes from AuthRoutes : 
-app.use('/api/auth' ,Authroutes);
-app.use('/api/tenants' ,TenantRoutes);
-app.use('/api/cars' ,CarRoutes);
+app.use('/api/auth', Authroutes);
+app.use('/api/tenants', TenantRoutes);
+app.use('/api/cars', CarRoutes);
 
 // App is listening on the port : 
-app.listen(Port, () =>{
-  console.log(`Server is running on the port ${Port}`)
+app.listen(Port, () => {
+  console.log(`Server is running on the port ${Port}`);
 });

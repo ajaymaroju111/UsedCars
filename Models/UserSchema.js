@@ -1,5 +1,5 @@
-const e = require('express');
 const mongoose = require('mongoose');
+const { Buffer } = require('buffer');
 
 const userData = new mongoose.Schema({
   profileImage : {

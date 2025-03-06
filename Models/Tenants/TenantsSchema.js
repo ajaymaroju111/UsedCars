@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { Buffer } = require('buffer');
 
 const TenantsSchema = new mongoose.Schema({
   profileImage : {

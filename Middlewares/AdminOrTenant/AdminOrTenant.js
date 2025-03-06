@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const Data = require("../../Models/CarsSchema");
 const TenantsData = require("../../Models/Tenants/TenantsSchema");
 
 
@@ -12,6 +11,7 @@ const isAdminOrTenant = async(req, res, next) => {
       .json({ error: "token in not found or expired please login" });
   }
   try {
+    // eslint-disable-next-line no-undef
     const decode = jwt.verify(token, process.env.JWT_SECRET);
     if (!decode) {
       return res.status(401).json({ error: "user Authentication failed " });
