@@ -2,8 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
 const TenantsData = require('../Models/Tenants/TenantsSchema.js');
 const { sendEmail } = require("../Nodemailer/Mails.js");
-const {JoiTenantRegisterSchema,
-} = require('../Joi/Joi.js');
+const {JoiTenantRegisterSchema} = require('../Joi/Joi.js');
 const {
   AfterConformRegisterEmail,
 } = require("../Nodemailer/MailTemplates/Templates.js");
@@ -15,30 +14,33 @@ const TenantRegister = async (req, res) => {
   if (error) {
     return res.status(400).json({ msg: error.details[0].message });
   }
-  try {
-    const { profileImage , username, aadhar, email, business, password, phone, Address } =
-      req.body;
-    if (!email || !TenentId || !username || !password || !phone) {
+  try { 
+    const { profileImage, username, aadhar, email, business, password, phone, Address, TenantId } = req.body;
+    if (!profileImage || !email || !TenantId || !username || !password || !phone) {
       return res
         .status(400)
-        .json({ error: "All fields is required for the registration" });
+        .json({ error: "All fields are required for the registration" });
     }
 
     //Search for the user in the DB :
-    const isUser = await TenantsData.findOne({email});
+    const isUser = await TenantsData.findOne({ email });
     if (isUser) {
       return res
         .status(201)
-        .json({ UserExist: "User already exist please login" });
+        .json({ UserExist: "User already exists, please login" });
     }
-    const HashedPassword = (await bcrypt.hash(password, 10)).toString();
+    const HashedPassword = await bcrypt.hash(password, 10);
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
     const Tentuser = await TenantsData.create({
-      profileImage : {
-        name : req.file.originalname,
-       img: {
-           data: req.file.buffer, // Store buffer data
-           contentType: req.file.mimetype
-       }},
+      profileImage: {
+        name: req.file.originalname,
+        img: {
+          data: req.file.buffer, // Store buffer data
+          contentType: req.file.mimetype
+        }
+      },
       username,
       aadhar,
       email,
@@ -53,18 +55,18 @@ const TenantRegister = async (req, res) => {
       email: Tentuser.email,
     });
     await TenantMeta.save();
-    //send the successfull message :
+    //send the successful message :
     await sendEmail({
       to: Tentuser.email,
-      subject: "Registration vraification",
+      subject: "Registration verification",
       text: AfterConformRegisterEmail(Tentuser.username),
     });
-    console.log("email send successfully");
+    console.log("email sent successfully");
     Tentuser.status = "active";
     await Tentuser.save();
     return res
       .status(200)
-      .json({ message: "User register verification has send to the mail!!" });
+      .json({ message: "User registration verification has been sent to the mail!" });
   } catch (error) {
     console.log(`registration error : ${error}`);
     return res.status(500).json({ RegistrationError: error });
@@ -74,21 +76,21 @@ const TenantRegister = async (req, res) => {
 //get tenants profile account by ID : 
 const GetTenantProfileById = async (req, res) => {
   try {
-    const {token } = req.cookies;
+    const { token } = req.cookies;
     if (!token) {
       return res.status(401).json({ error: "token not found" });
-    }
-    const {id} = token.id;
-    if (!id) {
-      return res.status(401).json({ IdNotFound: "id not found in the token" });
     }
     const decode = jwt.verify(token, process.env.JWT_SECRET);
     if (!decode) {
       return res.status(401).json({ error: "Token Validation Error" });
     }
-    const user = await TenantsData.findById({ id });
+    const { id } = decode;
+    if (!id) {
+      return res.status(401).json({ IdNotFound: "id not found in the token" });
+    }
+    const user = await TenantsData.findById(id);
     if (!user) {
-      return res.status(404).json({userDoesNotExist: "User does not Exist or token Expired please login"});
+      return res.status(404).json({ userDoesNotExist: "User does not exist or token expired, please login" });
     }
     return res.status(200).json({ user });
   } catch (error) {
@@ -96,73 +98,71 @@ const GetTenantProfileById = async (req, res) => {
   }
 };
 
-//update tenents profile based on cookie : 
-const UpdateTenantProfile = async(req , res) =>{
-  const {token} = req.cookies;
-  const {oldpassword , password} = req.body;
-  if(!token){
-    return res.status(401).json({message : "cannot get a token from a cookie"})
+//update tenants profile based on cookie : 
+const UpdateTenantProfile = async (req, res) => {
+  const { token } = req.cookies;
+  const { oldpassword, password } = req.body;
+  if (!token) {
+    return res.status(401).json({ message: "cannot get a token from a cookie" });
   }
   try {
-    const decode = jwt.verify(token , process.env.JWT_SECRET);
-    if(!decode){
-      return res.status(401).json({NotValid : "token is not Correct"});
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decode) {
+      return res.status(401).json({ NotValid: "token is not correct" });
     }
-    const {id} = token.id;
-    if(!id){
-      return res.status(401).json({error : "user ID could not get from a token"});
+    const { id } = decode;
+    if (!id) {
+      return res.status(401).json({ error: "user ID could not get from a token" });
     }
-    const user = await TenantsData.findById({id});
-    if(!user){
-      return res.status(404).json({message : "user does not exist please register"});
+    const user = await TenantsData.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "user does not exist, please register" });
     }
-    const isPass = await bcrypt.compare(oldpassword , user.password);
-    if(!isPass){
-      return res.status(404).json({message : "password does not match"});
+    const isPass = await bcrypt.compare(oldpassword, user.password);
+    if (!isPass) {
+      return res.status(404).json({ message: "password does not match" });
     }
-    if(password){
-      const hashedPass = await bcrypt.hash(password , 10);
+    if (password) {
+      const hashedPass = await bcrypt.hash(password, 10);
       user.password = hashedPass;
     }
     await user.save();
-    console.log("user updated Successfully");
-    return res.status(200).json({user})
-    
+    console.log("user updated successfully");
+    return res.status(200).json({ user });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({error : error});
+    return res.status(500).json({ error: error });
   }
-}
+};
 
 //Delete Tenants account based on the cookie : 
-const DeleteTenantAccount = async(req , res) =>{
-  const {token} = req.cookies;
-  if(!token){
-    return res.status(400).json({message : "no token found from the cookie"});
+const DeleteTenantAccount = async (req, res) => {
+  const { token } = req.cookies;
+  if (!token) {
+    return res.status(400).json({ message: "no token found from the cookie" });
   }
   try {
-    const decode = jwt.verify(token , process.env.JWT_SECRET);
-    if(!decode){
-      return res.status(400).json({message : "invalid token"})
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decode) {
+      return res.status(400).json({ message: "invalid token" });
     }
-    const {id} = token.id;
-    if(!id){
-      res.status(400).json({message : "user id not found in token"});
+    const { id } = decode;
+    if (!id) {
+      res.status(400).json({ message: "user id not found in token" });
     }
-    const user = await TenantsData.findByIdAndDelete({id});
-    if(!user){
-      res.status(404).json({message : "user not found please Register"});
+    const user = await TenantsData.findByIdAndDelete(id);
+    if (!user) {
+      res.status(404).json({ message: "user not found, please register" });
     }
-    const userMeta = await TenantsMeta.findByIdAndDelete({id});
-    if(!userMeta){
-      res.status(404).json({message : "user meta data not found"});
+    const userMeta = await TenantsMeta.findByIdAndDelete(id);
+    if (!userMeta) {
+      res.status(404).json({ message: "user meta data not found" });
     }
-    return res.status(200).json({sucess : "user deleted Successfully"});
+    return res.status(200).json({ success: "user deleted successfully" });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({error});
+    return res.status(500).json({ error });
   }
-}
+};
 
-
-module.exports = {TenantRegister, GetTenantProfileById, UpdateTenantProfile, DeleteTenantAccount}
+module.exports = { TenantRegister, GetTenantProfileById, UpdateTenantProfile, DeleteTenantAccount };

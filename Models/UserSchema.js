@@ -34,15 +34,8 @@ const userData = new mongoose.Schema({
     required : true,
   },
   DOB: {
-    day: {
-      type: Number
-    },
-    month: {
-      type: Number
-    },
-    year: {
-      type: Number
-    },
+   type : String,
+    required : true,
   },
   phone : {
     type : Number,

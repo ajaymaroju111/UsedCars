@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+//using the multer for the image uploading :
+const upload = require("../Multer/multer.js");
 const cookieParser = require('cookie-parser');
 const {
   TenantRegister,
@@ -12,7 +14,7 @@ router.use(cookieParser());
 
 
 //Routes for tenants : 
-router.post('/' ,TenantRegister);
+router.post('/' , upload.single('image'),TenantRegister);
 router.get('/:id' ,GetTenantProfileById);
 router.put('/:id' ,UpdateTenantProfile);
 router.delete('/:id' ,DeleteTenantAccount);
