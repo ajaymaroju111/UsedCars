@@ -7,7 +7,7 @@ const {UserRegister,
   Login,
   getProfile,
   forgetPassword,
-  LogoutUsingCooke,
+  LogoutUsingCookie,
   resetPassword,
   GetProfileById,
   UpdateUserProfile,
@@ -19,7 +19,7 @@ router.use(cookieParser());
 //phase - 1 : 
 router.post('/register', upload.single('image') ,UserRegister);
 router.post('/login' ,Login);
-router.post('/logout' ,LogoutUsingCooke);
+router.post('/logout' ,LogoutUsingCookie);
 router.get('/me' ,getProfile);
 router.post('/forget-password' ,forgetPassword);
 router.post('/reset-password' ,resetPassword);

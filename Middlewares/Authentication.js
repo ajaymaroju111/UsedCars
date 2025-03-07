@@ -3,14 +3,13 @@ const jwt = require("jsonwebtoken");
 const Data = require("../Models/UserSchema.js");
 const Meta = require("../Models/IdsAndMails.js");
 const session = require("../Models/UserSession.js");
-const mongoose = require("mongoose");
 const { sendEmail } = require("../Nodemailer/Mails.js");
 const { CreateToken } = require("./Tokens/UserToken.js");
-const {
-  JoiUserregisterSchema,
-  JoiLoginValidation,
-  JoiForgetPassword,
-} = require("../Joi/Joi.js");
+// const {
+//   JoiUserregisterSchema,
+//   JoiLoginValidation,
+//   JoiForgetPassword,
+// } = require("../Joi/Joi.js");
 const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
@@ -27,7 +26,6 @@ const UserRegister = async (req, res) => {
       firstname,
       middlename,
       lastname,
-      role,
       email,
       password,
       DOB,
@@ -45,10 +43,10 @@ const UserRegister = async (req, res) => {
         .status(404)
         .json({ UserExist: "User already exist please login" });
     }
-    const HashedPassword = (await bcrypt.hash(password, 10)).toString();
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
+    const HashedPassword = await bcrypt.hash(password, 10);
+    // if (!req.file) {
+    //   return res.status(400).json({ message: "No file uploaded" });
+    // }
     const user = await Data.create({
       profileImage: {
         name: req.file.originalname,
@@ -60,7 +58,6 @@ const UserRegister = async (req, res) => {
       firstname,
       middlename,
       lastname,
-      role,
       email,
       password: HashedPassword,
       DOB,
@@ -152,7 +149,7 @@ const Login = async (req, res) => {
 };
 
 //user logout :
-const LogoutUsingCooke = async (req, res) => {
+const LogoutUsingCookie = async (req, res) => {
   try {
     const { token } = req.cookies;
     if (!token) {
@@ -375,7 +372,7 @@ module.exports = {
   Login,
   getProfile,
   forgetPassword,
-  LogoutUsingCooke,
+  LogoutUsingCookie,
   resetPassword,
   GetProfileById,
   UpdateUserProfile,

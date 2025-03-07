@@ -9,7 +9,7 @@ const CarRoutes = require('./Routes/CarRoutes.js');
 const connectDB = require('./Databases/DBconnect.js');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
-const Port = process.env.PORT || 0;
+const Port = process.env.PORT || 3000;
 
 connectDB();
 

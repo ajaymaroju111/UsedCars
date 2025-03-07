@@ -1,10 +1,31 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const TenantsData = require("../Models/Tenants/TenantsSchema.js");
 dotenv.config();
 const carsDB = require("../Models/CarsSchema.js");
 
 // Create a new car listing :
 const CreateNewCarId = async (req, res) => {
+  const { token } = req.cookies;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ error: "Token not found or expired, please login" });
+  }
+  const decode = jwt.verify(token, process.env.JWT_SECRET); // Verify the token
+  if (!decode) {
+    return res.status(401).json({ error: "User authentication failed" });
+  }
+  const id = decode.id;
+  if (!id) {
+    return res.status(400).json({ error: "ID not found" });
+  }
+  const isUser = await TenantsData.findById(id);
+  if (!isUser) {
+    return res.status(404).json({ error: "User not found" });
+  } else if (isUser.status === "inactive") {
+    return res.status(401).json({ error: "User is inactive" });
+  }
   try {
     const {
       brand,
@@ -97,20 +118,22 @@ const GetSpecificCarsById = async (req, res) => {
 
 // Update a car by using car ID :
 const UpdateCarUsingID = async (req, res) => {
-  const { token } = req.cookies;
-  if (!token) {
-    return res
-      .status(401)
-      .json({ error: "Token not found or expired, please login" });
-  }
-  const { id } = req.params;
-  if (!id) {
-    return res.status(400).json({ error: "ID not found" });
-  }
+ 
+ 
   try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ error: "Token not found or expired, please login" });
+    }
     const decode = jwt.verify(token, process.env.JWT_SECRET);
     if (!decode) {
       return res.status(401).json({ error: "User authentication failed" });
+    }
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "ID not found" });
     }
     const car = await carsDB.findById(id);
     if (!car) {
@@ -125,20 +148,25 @@ const UpdateCarUsingID = async (req, res) => {
 
 // Remove a car from the listing :
 const RemoveCarUsingID = async (req, res) => {
-  const { token } = req.headers;
-  if (!token) {
-    return res
-      .status(401)
-      .json({ error: "Token not found or expired, please login" });
-  }
+  
   const { id } = req.params;
   if (!id) {
     return res.status(400).json({ error: "ID not found in the params" });
   }
   try {
+    const { token } = req.headers;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ error: "Token not found or expired, please login" });
+  }
     const decode = jwt.verify(token, process.env.JWT_SECRET);
     if (!decode) {
       return res.status(401).json({ error: "User authentication failed" });
+    }
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "ID not found in the params" });
     }
     const deleteCar = await carsDB.findByIdAndDelete(id);
     if (!deleteCar) {

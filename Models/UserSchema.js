@@ -15,15 +15,11 @@ const userData = new mongoose.Schema({
   },
   middlename : {
     type : String,
+    default : '',
   },
   lastname : {
     type : String,
     required : true,
-  },
-  role : {
-    type : String,
-    enum : ['admin' , 'user' , 'tenant'],
-    default : 'user',
   },
   email : {
     type : String,
@@ -38,7 +34,7 @@ const userData = new mongoose.Schema({
     required : true,
   },
   phone : {
-    type : Number,
+    type : String,
   },
   status : {
     type : String,
