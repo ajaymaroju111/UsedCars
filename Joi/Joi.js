@@ -17,8 +17,6 @@ const JoiLoginValidation = Joi.object({
   password : Joi.string().min(6).required().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
 });
 
-//conform login validation : 
-
 
 //forget Password Validation : 
 const JoiForgetPassword = Joi.object({
