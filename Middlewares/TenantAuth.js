@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
 const TenantsData = require('../Models/Tenants/TenantsSchema.js');
 const { sendEmail } = require("../Nodemailer/Mails.js");
-const {JoiTenantRegisterSchema} = require('../Joi/Joi.js');
+const {JoiTenantRegisterSchema, JoiTenantUpdateProfile} = require('../Joi/Joi.js');
 const {
   AfterConformRegisterEmail,
 } = require("../Nodemailer/MailTemplates/Templates.js");
@@ -100,6 +100,10 @@ const GetTenantProfileById = async (req, res) => {
 
 //update tenants profile based on cookie : 
 const UpdateTenantProfile = async (req, res) => {
+  const { error } = JoiTenantUpdateProfile.validate(req.body);
+  if (error) {
+    return res.status(400).json({ msg: error.details[0].message });
+  }
   const { token } = req.cookies;
   const { oldpassword, password } = req.body;
   if (!token) {

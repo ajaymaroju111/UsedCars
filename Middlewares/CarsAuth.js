@@ -118,8 +118,6 @@ const GetSpecificCarsById = async (req, res) => {
 
 // Update a car by using car ID :
 const UpdateCarUsingID = async (req, res) => {
- 
- 
   try {
     const { token } = req.cookies;
     if (!token) {

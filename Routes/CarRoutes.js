@@ -5,9 +5,9 @@ const {
   GetSpecificCarsById,
   CreateNewCarId,
   UpdateCarUsingID,
-  RemoveCarUsingID
+  RemoveCarUsingID,
+  SearchCarUsingDetails,
 } = require("../Middlewares/CarsAuth.js");
-const isAdminOrTenant = require("../Middlewares/AdminOrTenant/AdminOrTenant.js");
 const upload = require("../Multer/multer.js");
 router.use(express.json());
 router.use(express.urlencoded({ extended: false }));
@@ -16,10 +16,11 @@ const cookieParser = require("cookie-parser");
 router.use(cookieParser());
 
 //using Routes for the cars : 
-router.post('/', isAdminOrTenant, upload.single('image'), CreateNewCarId);
+router.post('/', upload.single('image'), CreateNewCarId);
 router.get('/', GetAllCarsList);
 router.get('/:id', GetSpecificCarsById);
-router.put('/:id', isAdminOrTenant, UpdateCarUsingID);
-router.delete('/:id', isAdminOrTenant, RemoveCarUsingID);
+router.put('/:id', UpdateCarUsingID);
+router.delete('/:id', RemoveCarUsingID);
+router.get('/search', SearchCarUsingDetails);
 
 module.exports = router;

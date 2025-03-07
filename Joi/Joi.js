@@ -7,18 +7,8 @@ const JoiUserregisterSchema = Joi.object({
   lastname: Joi.string().min(2).required(),
   email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
   password: Joi.string().min(6).required().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
-  DOB: Joi.object({
-    day: Joi.number().integer().min(0).max(31).required(),  
-    month: Joi.number().integer().min(0).max(12).integer(),  
-    year: Joi.number().integer().min(1900).max(2024).required(),
-  }),
-  phone: Joi.number().integer().required(),
-});
-
-//conform register validation : 
-const JoiConformRegister = Joi.object({
-  email : Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-  otp : Joi.number().integer().required(),
+  DOB: Joi.string().required(),
+  phone: Joi.string().required(),
 });
 
 //login validation : 
@@ -28,10 +18,7 @@ const JoiLoginValidation = Joi.object({
 });
 
 //conform login validation : 
-const JoiConformLogin = Joi.object({
-  email : Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-  otp : Joi.number().integer().required(),
-});
+
 
 //forget Password Validation : 
 const JoiForgetPassword = Joi.object({
@@ -44,23 +31,28 @@ const JoiResetPassword = Joi.object({
   newPassword : Joi.string().min(6).required().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).invalid(Joi.ref('oldPassword')),
 });
 
+//update Profile validation : 
+const JoiUpdateProfile = Joi.object({
+  email : Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] }}),
+  password : Joi.string().min(6).pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
+});
 ///--------------------------------------------------------------------------------------------------------------------------------------------------
 
 //tenants register validation : 
 const JoiTenantRegisterSchema = Joi.object({
   username: Joi.string().min(2).required(),
-  TenentId : Joi.string().required(),
+  aadhar : Joi.string().required(),
+  business : Joi.string().required(),
   email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
   password: Joi.string().min(6).required().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
   phone: Joi.number().integer().required(),
   Address : Joi.string().min(5).required(),
 });
 
-//conform registration validation : 
-const JoiTenantConformRegister = Joi.object({
-  email : Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
-  otp : Joi.string().min(4).required(),
+const JoiTenantUpdateProfile = Joi.object({
+  oldPassword : Joi.string().min(6).required().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
+  password : Joi.string().min(6).required().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).invalid(Joi.ref('oldPassword')),
 });
 
-module.exports = {JoiUserregisterSchema, JoiConformRegister, JoiLoginValidation, JoiConformLogin, JoiForgetPassword, JoiResetPassword}
-module.exports = {JoiTenantRegisterSchema, JoiTenantConformRegister}
+module.exports = {JoiUserregisterSchema, JoiLoginValidation, JoiForgetPassword, JoiResetPassword, JoiUpdateProfile}
+module.exports = {JoiTenantRegisterSchema, JoiTenantUpdateProfile}

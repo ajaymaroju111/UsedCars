@@ -5,11 +5,13 @@ const Meta = require("../Models/IdsAndMails.js");
 const session = require("../Models/UserSession.js");
 const { sendEmail } = require("../Nodemailer/Mails.js");
 const { CreateToken } = require("./Tokens/UserToken.js");
-// const {
-//   JoiUserregisterSchema,
-//   JoiLoginValidation,
-//   JoiForgetPassword,
-// } = require("../Joi/Joi.js");
+const {
+  JoiUserregisterSchema,
+  JoiLoginValidation,
+  JoiForgetPassword,
+  JoiResetPassword,
+  JoiUpdateProfile
+} = require("../Joi/Joi.js");
 const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
@@ -17,10 +19,10 @@ const {
 
 // User Registration :
 const UserRegister = async (req, res) => {
-  // const { error } = JoiUserregisterSchema.validate(req.body);
-  // if (error) {
-  //   return res.status(400).json({ msg: error.details[0].message });
-  // }
+  const { error } = JoiUserregisterSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ msg: error.details[0].message });
+  }
   try {
     const {
       firstname,
@@ -44,9 +46,9 @@ const UserRegister = async (req, res) => {
         .json({ UserExist: "User already exist please login" });
     }
     const HashedPassword = await bcrypt.hash(password, 10);
-    // if (!req.file) {
-    //   return res.status(400).json({ message: "No file uploaded" });
-    // }
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
     const user = await Data.create({
       profileImage: {
         name: req.file.originalname,
@@ -93,10 +95,10 @@ const UserRegister = async (req, res) => {
 
 //user login using  email and  password
 const Login = async (req, res) => {
-  // const { error } = JoiLoginValidation.validate(req.body);
-  // if (error) {
-  //   return res.status(400).json({ msg: error.details[0].message });
-  // }
+  const { error } = JoiLoginValidation.validate(req.body);
+  if (error) {
+    return res.status(400).json({ msg: error.details[0].message });
+  }
   try {
     const { email, password } = req.body;
     if (!email) {
@@ -205,10 +207,10 @@ const getProfile = async (req, res) => {
 
 //sending forget password link to the user email
 const forgetPassword = async (req, res) => {
-  // const { error } = JoiForgetPassword.validate(req.body);
-  // if (error) {
-  //   return res.status(400).json({ msg: error.details[0].message });
-  // }
+  const { error } = JoiForgetPassword.validate(req.body);
+  if (error) {
+    return res.status(400).json({ msg: error.details[0].message });
+  }
   try {
     const { email } = req.body;
     if (!email) {
@@ -233,6 +235,10 @@ const forgetPassword = async (req, res) => {
 
 //user reset password :  No Authentication required
 const resetPassword = async (req, res) => {
+  const { error } = JoiResetPassword.validate(req.body);
+  if (error) {
+    return res.status(400).json({ msg: error.details[0].message });
+  }
   try {
     const { oldPassword, newPassword } = req.body;
     const { token } = req.cookies;
@@ -299,6 +305,10 @@ const GetProfileById = async (req, res) => {
 
 //update user profile based on cookie :
 const UpdateUserProfile = async (req, res) => {
+  const { error } = JoiUpdateProfile.validate(req.body);
+  if (error) {
+    return res.status(400).json({ msg: error.details[0].message });
+  }
   const { token } = req.cookies;
   const { email, password } = req.body;
   if (!token) {

@@ -67,7 +67,6 @@ describe('Authentication Middleware', () => {
         .get('/profile')
         .set('Cookie', [`token=${token}`]);
       expect(res.statusCode).toEqual(200);
-      // Adjust the expected response based on your actual implementation
       expect(res.body).toHaveProperty('email');
     });
   });
@@ -102,7 +101,6 @@ describe('Authentication Middleware', () => {
         .get(`/profile/${userId}`)
         .set('Cookie', [`token=${token}`]);
       expect(res.statusCode).toEqual(200);
-      // Adjust the expected response based on your actual implementation
       expect(res.body).toHaveProperty('email');
     });
   });
