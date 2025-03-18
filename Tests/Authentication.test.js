@@ -24,7 +24,6 @@ describe('Authentication Middleware', () => {
   beforeAll(async () => {
     await mongoose.connect('mongodb://localhost:27017/testdb', { useNewUrlParser: true, useUnifiedTopology: true });
   });
-
   afterAll(async () => {
     await mongoose.connection.close();
   });
@@ -40,7 +39,7 @@ describe('Authentication Middleware', () => {
           email: 'john@example.com',
           password: 'password123',
           DOB: '1990-01-01',
-          phone: '1234567890',
+          phone: "1234567890",
         });
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'User registered successfully');
@@ -52,8 +51,8 @@ describe('Authentication Middleware', () => {
       const res = await request(app)
         .post('/login')
         .send({
-          email: 'john@example.com',
-          password: 'password123',
+          username: "testuser",
+          password: "password123",
         });
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('Success', true);

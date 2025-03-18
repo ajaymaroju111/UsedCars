@@ -9,41 +9,54 @@ const CarRoutes = require('./Routes/CarRoutes.js');
 const connectDB = require('./Databases/DBconnect.js');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+
+// Load Swagger YAML
+// Load Swagger YAML file
+const swaggerDocument = YAML.load('./api.yaml');
 const Port = process.env.PORT || 3000;
 
-connectDB();
+// Connect to Database
+connectDB().catch(err => {
+  console.error('Failed to connect to the database:', err);
+  process.exit(1);
+});
 
 const app = express();
 
-//using express limiter for the 
+// Set up Rate Limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000, 
+  max: 100,
   message: 'Too many requests from this IP, please try again later.',
-  headers: true, // Send rate limit info in response headers
+  headers: true,
 });
-
-// Apply rate limiting to all requests
 app.use(limiter);
 
-//middlewares 
+// Enable CORS
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "http://localhost:3001",
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
 
+// Middleware
 app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-//Using routes from AuthRoutes : 
+// Serve Swagger Docs
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// Routes
 app.use('/api/auth', Authroutes);
 app.use('/api/tenants', TenantRoutes);
 app.use('/api/cars', CarRoutes);
 
-// App is listening on the port : 
+// Start Server
 app.listen(Port, () => {
-  console.log(`Server is running on the port ${Port}`);
+  console.log(`Server is running on port ${Port}`);
+  console.log(`Swagger Docs available at http://localhost:${Port}/api-docs`);
 });

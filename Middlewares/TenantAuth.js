@@ -15,7 +15,16 @@ const TenantRegister = async (req, res) => {
     return res.status(400).json({ msg: error.details[0].message });
   }
   try { 
-    const { profileImage, username, aadhar, email, business, password, phone, Address, TenantId } = req.body;
+    const { profileImage, 
+      username, 
+      aadhar, 
+      email, 
+      business, 
+      password, 
+      phone, 
+      Address, 
+      TenantId 
+    } = req.body;
     if (!profileImage || !email || !TenantId || !username || !password || !phone) {
       return res
         .status(400)

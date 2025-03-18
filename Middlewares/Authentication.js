@@ -10,7 +10,7 @@ const {
   JoiLoginValidation,
   JoiForgetPassword,
   JoiResetPassword,
-  JoiUpdateProfile
+  JoiUpdateProfile,
 } = require("../Joi/Joi.js");
 const {
   forgetPasswordTemplate,
@@ -19,24 +19,17 @@ const {
 
 // User Registration :
 const UserRegister = async (req, res) => {
-  const { error } = JoiUserregisterSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ msg: error.details[0].message });
-  }
+  // const { error } = JoiUserregisterSchema.validate(req.body);
+  // if (error) {
+  //   return res.status(400).json({ msg: error.details[0].message });
+  // }
   try {
-    const {
-      firstname,
-      middlename,
-      lastname,
-      email,
-      password,
-      DOB,
-      phone,
-    } = req.body;
-    if (!email) {
+    const { firstname, middlename, lastname, email, password, DOB, phone } = req.body;
+
+    if (!firstname || !lastname || !email || !password || !DOB || !phone) {
       return res
         .status(401)
-        .json({ error: "Email is required for the registration" });
+        .json({ error: "All fields are required for the registration" });
     }
     //Search for the user in the DB :
     const isUser = await Data.findOne({ email });
@@ -81,12 +74,10 @@ const UserRegister = async (req, res) => {
     //Status Change after the email verification :
     user.status = "active";
     await user.save();
-    return res
-      .status(200)
-      .json({
-        message:
-          "user registration conformation has send to the email !!  Please Verify",
-      });
+    return res.status(200).json({
+      message:
+        "user registration conformation has send to the email !!  Please Verify",
+    });
   } catch (error) {
     console.log(`registration error : ${error}`);
     return res.status(500).json({ RegistrationError: error });
@@ -95,10 +86,10 @@ const UserRegister = async (req, res) => {
 
 //user login using  email and  password
 const Login = async (req, res) => {
-  const { error } = JoiLoginValidation.validate(req.body);
-  if (error) {
-    return res.status(400).json({ msg: error.details[0].message });
-  }
+  // const { error } = JoiLoginValidation.validate(req.body);
+  // if (error) {
+  //   return res.status(400).json({ msg: error.details[0].message });
+  // }
   try {
     const { email, password } = req.body;
     if (!email) {
@@ -207,10 +198,10 @@ const getProfile = async (req, res) => {
 
 //sending forget password link to the user email
 const forgetPassword = async (req, res) => {
-  const { error } = JoiForgetPassword.validate(req.body);
-  if (error) {
-    return res.status(400).json({ msg: error.details[0].message });
-  }
+  // const { error } = JoiForgetPassword.validate(req.body);
+  // if (error) {
+  //   return res.status(400).json({ msg: error.details[0].message });
+  // }
   try {
     const { email } = req.body;
     if (!email) {
@@ -235,10 +226,10 @@ const forgetPassword = async (req, res) => {
 
 //user reset password :  No Authentication required
 const resetPassword = async (req, res) => {
-  const { error } = JoiResetPassword.validate(req.body);
-  if (error) {
-    return res.status(400).json({ msg: error.details[0].message });
-  }
+  // const { error } = JoiResetPassword.validate(req.body);
+  // if (error) {
+  //   return res.status(400).json({ msg: error.details[0].message });
+  // }
   try {
     const { oldPassword, newPassword } = req.body;
     const { token } = req.cookies;
@@ -270,7 +261,9 @@ const resetPassword = async (req, res) => {
     const newHashedpassword = await bcrypt.hash(newPassword, 10);
     user.password = newHashedpassword;
     await user.save();
-    return res.status(200).json({ successful: "password updated Successfully" });
+    return res
+      .status(200)
+      .json({ successful: "password updated Successfully" });
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -305,10 +298,10 @@ const GetProfileById = async (req, res) => {
 
 //update user profile based on cookie :
 const UpdateUserProfile = async (req, res) => {
-  const { error } = JoiUpdateProfile.validate(req.body);
-  if (error) {
-    return res.status(400).json({ msg: error.details[0].message });
-  }
+  // const { error } = JoiUpdateProfile.validate(req.body);
+  // if (error) {
+  //   return res.status(400).json({ msg: error.details[0].message });
+  // }
   const { token } = req.cookies;
   const { email, password } = req.body;
   if (!token) {
