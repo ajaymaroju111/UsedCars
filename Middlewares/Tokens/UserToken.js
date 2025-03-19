@@ -7,7 +7,6 @@ const CreateToken = (user) =>{
       id: user._id,
       email: user.email
     };
-    
     const key = process.env.JWT_SECRET;
     const expiry = { expiresIn: '1h' };
     return jwt.sign(data, key, expiry);

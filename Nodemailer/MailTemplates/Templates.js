@@ -79,7 +79,7 @@ input[type="email"] {
 } 
 
 //verification button after registration : 
-const AccountConformationafterRegister = (Fullname) =>{
+const AccountConformationafterRegister = (Fullname , token) =>{
   return `
   <!DOCTYPE html>
 <html>
@@ -139,6 +139,7 @@ const AccountConformationafterRegister = (Fullname) =>{
         <p class="message">
             Thank you for registering. Please click the button below to verify your email address and activate your account.
         </p>
+        <h3>${token}</h3>
         <a href="{{verification_link}}" class="btn">Verify Your Email</a>
         <p class="footer">
             If you did not sign up for this account, please ignore this email.

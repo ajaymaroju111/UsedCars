@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 //using the multer for the image uploading :
-const upload = require("../Multer/multer.js");
+const upload = require("../Middlewares/Multer/multer.js");
 const cookieParser = require('cookie-parser');
-const {UserRegister,
+const {
+  UserRegister,
+  ConformUserRegister,
   Login,
   getProfile,
   forgetPassword,
@@ -12,12 +14,13 @@ const {UserRegister,
   GetProfileById,
   UpdateUserProfile,
   DeleteUserAccount,
-} = require('../Middlewares/Authentication.js');
+} = require('../Controllers/Authentication.js');
 
 router.use(cookieParser());
 
 //phase - 1 : 
 router.post('/register', upload.single('image') ,UserRegister);
+router.post('/conform', ConformUserRegister);
 router.post('/login' ,Login);
 router.post('/logout' ,LogoutUsingCookie);
 router.get('/me' ,getProfile);

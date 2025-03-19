@@ -1,11 +1,11 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const TenantsData = require("../Models/Tenants/TenantsSchema.js");
+const users = require("../Models/UserSchema.js");
 dotenv.config();
-const carsDB = require("../Models/CarsSchema.js");
+const Cars = require("../Models/CarsSchema.js");
 
 // Create a new car listing :
-const CreateNewCarId = async (req, res) => {
+const UploadNewCar = async (req, res) => {
   const { token } = req.cookies;
   if (!token) {
     return res
@@ -20,11 +20,18 @@ const CreateNewCarId = async (req, res) => {
   if (!id) {
     return res.status(400).json({ error: "ID not found" });
   }
-  const isUser = await TenantsData.findById(id);
+  const isUser = await users.findById(id);
   if (!isUser) {
     return res.status(404).json({ error: "User not found" });
-  } else if (isUser.status === "inactive") {
+  }
+  if (!(isUser.status === "active")) {
     return res.status(401).json({ error: "User is inactive" });
+  }
+  if (isUser.number_of_uploads > process.env.POST_LIMIT) {
+    console.log("upload limit exceeded, purchase any plan for further uploads");
+    return res.status(402).json({
+      message: "upload limit exceeded, purchase any plan for further uploads",
+    });
   }
   try {
     const {
@@ -59,7 +66,7 @@ const CreateNewCarId = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-    const cars = new carsDB({
+    const cars = new Cars({
       brand,
       model,
       year,
@@ -78,9 +85,12 @@ const CreateNewCarId = async (req, res) => {
         },
       },
       description,
+      owner_id: isUser._id,
     });
     await cars.save();
-    return res.status(201).json({ Success: "Car created successfully" });
+    isUser.number_of_uploads += 1;
+    await isUser.save();
+    return res.status(201).json({ Success: "Car post added successfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ CarCreationTimeError: error.message });
@@ -101,11 +111,34 @@ const GetAllCarsList = async (req, res) => {
 // Get a specific car details based on ID :
 const GetSpecificCarsById = async (req, res) => {
   try {
-    const id = req.headers.id;
-    if (!id) {
+    const carid = req.params;
+    const { token } = req.cookies;
+    if (!carid) {
       return res.status(400).json({ error: "ID not found" });
     }
-    const car = await carsDB.findById(id);
+    if (!token) {
+      return res.status(401).json({ TokenNotFound: "token not found" });
+    }
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decode) {
+      return res.status(401).json({ NotValid: "token is not valid" });
+    }
+    const id = decode.id;
+    if (!id) {
+      return res.status(401).json({ IdNotFound: "id not found in the token" });
+    }
+    const user = await users.findById(id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ UserNotFound: "User not found please register" });
+    }
+    if (!(user.status === "active")) {
+      return res
+        .status(401)
+        .json({ message: "user is not active please verify the email" });
+    }
+    const car = await Cars.findById(id);
     if (!car) {
       return res
         .status(404)
@@ -131,13 +164,33 @@ const UpdateCarUsingID = async (req, res) => {
     if (!decode) {
       return res.status(401).json({ error: "User authentication failed" });
     }
-    const { id } = req.params;
-    if (!id) {
+    const id = decode.id;
+    if(!id){
+      return res.status(401).json({
+        message : "user ID can not fetched in cookie"
+      });
+    }
+    if (!(user.status === "active")) {
+      return res.status(401).json({ error: "User is inactive please conform your account" });
+    }
+    const user = await users.findById(id);
+    if(!user){
+      return res.status(400).json({
+        message : "No user Exist on this ID"
+      });
+    }
+    const { carid } = req.params;
+    if (!carid) {
       return res.status(400).json({ error: "ID not found" });
     }
-    const car = await carsDB.findById(id);
+    const car = await Cars.findById(car);
     if (!car) {
       return res.status(404).json({ error: "No car found with this ID" });
+    }
+    if(!(user._id != car.owner_id)){
+      return res.status(401).json({
+        message : "you are not authorized"
+      });
     }
     res.status(200).json({ YourCar: car });
   } catch (error) {
@@ -148,12 +201,8 @@ const UpdateCarUsingID = async (req, res) => {
 
 // Remove a car from the listing :
 const RemoveCarUsingID = async (req, res) => {
-  const { id } = req.params;
-  if (!id) {
-    return res.status(400).json({ error: "ID not found in the params" });
-  }
   try {
-    const { token } = req.headers;
+    const { token } = req.cookies;
     if (!token) {
       return res
         .status(401)
@@ -163,13 +212,40 @@ const RemoveCarUsingID = async (req, res) => {
     if (!decode) {
       return res.status(401).json({ error: "User authentication failed" });
     }
-    const { id } = req.params;
+    const id = decode.id;
     if (!id) {
+      return res.status(401).json({
+        message: "user ID is not Fetched",
+      });
+    }
+
+    const user = await users.findById(id);
+    if(!user){
+      return res.status(400).json({
+        message : "authentication failed please login again"
+      });
+    }
+    if (!(user.status === "active")) {
+      return res.status(401).json({ error: "User is inactive" });
+    }
+    const { carid } = req.params;
+    if (!carid) {
       return res.status(400).json({ error: "ID not found in the params" });
     }
-    const deleteCar = await carsDB.findByIdAndDelete(id);
-    if (!deleteCar) {
+    const target = await Cars.findById(carid);
+    if (!target) {
       return res.status(404).json({ error: "Car not found" });
+    }
+    if(!(user._id != target.owner_id)){
+      return res.status(401).json({
+        message : "you are not authorized"
+      });
+    }
+    const toDelete = await Cars.findByIdAndDelete(id);
+    if(!toDelete){
+      return res.status(401).json({
+        message : "Can't find a car on this ID"
+      });
     }
     return res.status(200).json({ Success: "Car data deleted successfully" });
   } catch (error) {
@@ -188,7 +264,7 @@ const SearchCarUsingDetails = async (req, res) => {
     if (brand) filters.brand = { $regex: brand, $options: "i" };
     if (location) filters.location = { $regex: location, $options: "i" };
     if (price) filters.price = Number(price);
-    const cars = await carsDB.find(filters);
+    const cars = await Cars.find(filters);
     if (!cars) {
       return res.status(404).json({ error: "No Data Exist on the Database" });
     }
@@ -200,9 +276,9 @@ const SearchCarUsingDetails = async (req, res) => {
 };
 
 module.exports = {
+  UploadNewCar,
   GetAllCarsList,
   GetSpecificCarsById,
-  CreateNewCarId,
   UpdateCarUsingID,
   RemoveCarUsingID,
   SearchCarUsingDetails,

@@ -4,9 +4,9 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const { describe, it, expect, beforeAll, afterAll } = require('@jest/globals');
-const { UserRegister, Login, getProfile, forgetPassword, LogoutUsingCookie, resetPassword, GetProfileById, UpdateUserProfile, DeleteUserAccount } = require('../Middlewares/Authentication');
+const { UserRegister, Login, getProfile, forgetPassword, LogoutUsingCookie, resetPassword, GetProfileById, UpdateUserProfile, DeleteUserAccount } = require('../Controllers/Authentication');
 require('../Nodemailer/Mails');
-
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,20}$/;
 const app = express();
 app.use(express.json());
 app.use(cookieParser());

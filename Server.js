@@ -4,7 +4,7 @@ dotenv.config();
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const Authroutes = require('./Routes/Authroutes.js');
-const TenantRoutes = require('./Routes/TenantRoutes.js');
+const adminRoutes = require('./Routes/adminRoutes.js')
 const CarRoutes = require('./Routes/CarRoutes.js');
 const connectDB = require('./Databases/DBconnect.js');
 const rateLimit = require('express-rate-limit');
@@ -12,8 +12,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 
-// Load Swagger YAML
-// Load Swagger YAML file
+// Load Swagger YAML file : 
 const swaggerDocument = YAML.load('./api.yaml');
 const Port = process.env.PORT || 3000;
 
@@ -51,7 +50,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Routes
 app.use('/api/auth', Authroutes);
-app.use('/api/tenants', TenantRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/cars', CarRoutes);
 
 // Start Server

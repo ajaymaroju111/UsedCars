@@ -71,9 +71,12 @@ const CarsSchema = new mongoose.Schema({
   dateListed: { 
     type: Date, 
     default: Date.now 
+  },
+  owner_id : {
+    type : String,
   }
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model('carsDB' , CarsSchema);
+module.exports = mongoose.model('Cars' , CarsSchema);
