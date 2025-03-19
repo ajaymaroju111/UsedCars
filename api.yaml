@@ -1,0 +1,1205 @@
+openapi: "3.1.0"
+security:
+  - CookieAuth: []
+tags:
+  - name: Users
+    description: Operations related to customers
+  - name: Tenants
+    description: Operations related to car dealers
+  - name: Cars
+    description: Operations related to cars
+servers:
+  - url: http://localhost:3001
+    description: Local server
+  - url: https://api.usedcars.com
+    description: Production server
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: Authentication cookie containing the JWT token
+info:
+  title: Used Cars API
+  description: API for usedCars Website
+  contact:
+    name: Support Team
+    url: https://www.usedcars.com/support
+    email: ajaymaroju@techpixe.com
+  termsOfService: https://www.usedcars.com/terms
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+paths:
+  /api/auth/register:
+    post:
+      summary: Registration of the user
+      tags:
+        - Users
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Upload profile picture
+                firstname:
+                  type: string
+                  example: Ajay
+                middlename:
+                  type: string
+                  example: 
+                lastname:
+                  type: string
+                  example: Maroju
+                email:
+                  type: string
+                  format: email
+                  example: marojuajay111@gmail.com
+                password:
+                  type: string
+                  format: password
+                  example: 123456
+                DOB:
+                  type: string
+                  format: string
+                  example: 02-02-2024
+                phone:
+                  type: string
+                  format: string
+                  example: 900000000
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              example:
+                message: "User registered successfully"
+                userId: "12345"
+  
+  /api/auth/login:
+    post:
+      summary: User login
+      tags:
+        - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: marojuajay111@gmail.com
+                password:
+                  type: string
+                  format: password
+                  example: 123456
+      responses:
+        '200':
+          description: User successfully logged in
+          content:
+            application/json:
+              example:
+                message: "User Logged in Successfully !!"
+        '400':
+          description: Incorrect email or password or user not found
+          content:
+            application/json:
+              examples:
+                UserNotExist:
+                  value:
+                    error: "User does not exist!!.. please register"
+                IncorrectPassword:
+                  value:
+                    error: "Incorrect password"
+        '401':
+          description: Missing email or password
+          content:
+            application/json:
+              examples:
+                EmailRequired:
+                  value:
+                    error: "email is required for the login"
+                PasswordRequired:
+                  value:
+                    error: "password is required for the login"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                error: "An unexpected error occurred during login"
+
+  /api/auth/forget-password:
+    post:
+      summary: Request a password reset link
+      description: Sends an email to the user with a password reset link.
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: marojuajay111@gmail.com
+              required:
+                - email
+      responses:
+        '200':
+          description: Password reset link sent successfully
+          content:
+            application/json:
+              example:
+                message: "Password link sent to the mail"
+        '401':
+          description: Email is required
+          content:
+            application/json:
+              example:
+                error: "Email is required"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example:
+                error: "User does not exist"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                error: "An unexpected error occurred during password reset"
+
+  /api/auth/reset-password:
+    post:
+      summary: Change user password
+      description: Allows authenticated users to change their password using their old password and a new one.
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                  format: password
+                  example: 123456
+                newPassword:
+                  type: string
+                  format: password
+                  example: 123
+              required:
+                - oldPassword
+                - newPassword
+      responses:
+        '200':
+          description: Password updated successfully
+          content:
+            application/json:
+              example:
+                message: "Password updated Successfully"
+        '400':
+          description: Token not found or password mismatch
+          content:
+            application/json:
+              examples:
+                TokenNotFound:
+                  value:
+                    error: "Token did not found in cookie"
+                PasswordDoesnotMatch:
+                  value:
+                    error: "Old password does not match"
+        '401':
+          description: Missing password fields or invalid token
+          content:
+            application/json:
+              examples:
+                Required:
+                  value:
+                    error: "Old password and new password are required"
+                NotValid:
+                  value:
+                    error: "Token is not valid"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example:
+                error: "User did not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                error: "An unexpected error occurred during password change"
+
+  /api/auth/me:
+    get:
+      summary: Retrieve User Data
+      description: Fetches user data using a valid token from cookies.
+      tags:
+        - Users
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: User data retrieved successfully
+          content:
+            application/json:
+              example:
+                _id: "60d0fe4f5311236168a109ca"
+                firstname: "John"
+                lastname: "Doe"
+                email: "johndoe@example.com"
+        '401':
+          description: Unauthorized or token-related issues
+          content:
+            application/json:
+              examples:
+                TokenNotFound:
+                  value:
+                    error: "Token not found in the cookie"
+                NotValid:
+                  value:
+                    error: "Token is not valid"
+                IdNotFound:
+                  value:
+                    error: "ID not found in the token"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example:
+                error: "User not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                error: "An unexpected error occurred while fetching user data"
+
+  /api/auth/:id:
+    put:
+      summary: Update User Details
+      description: Updates the user's email or password using the token from cookies.
+      tags:
+        - Users
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: johndoe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: NewPassword123
+      responses:
+        '200':
+          description: User details updated successfully
+          content:
+            application/json:
+              example:
+                _id: "60d0fe4f5311236168a109ca"
+                email: "johndoe@example.com"
+                message: "User updated Successfully"
+        '401':
+          description: Unauthorized or token-related issues
+          content:
+            application/json:
+              examples:
+                TokenNotFound:
+                  value:
+                    error: "Cannot get a token from a cookie"
+                NotValid:
+                  value:
+                    error: "Token is not valid"
+                IdNotFound:
+                  value:
+                    error: "User ID could not be extracted from the token"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example:
+                error: "User does not exist"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                error: "An unexpected error occurred while updating user details"
+    
+
+    delete:
+      summary: Delete User
+      description: Deletes a user based on the token found in cookies.
+      tags:
+        - Users
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              example:
+                success: "User deleted Successfully"
+        '400':
+          description: Token or user ID related error
+          content:
+            application/json:
+              examples:
+                TokenNotFound:
+                  value:
+                    message: "No token found from the cookie"
+                IdNotFound:
+                  value:
+                    message: "User ID not found in token"
+        '401':
+          description: Unauthorized - Invalid token
+          content:
+            application/json:
+              example:
+                message: "Invalid token"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              examples:
+                UserMetaNotFound:
+                  value:
+                    message: "User metadata not found"
+                UserNotFound:
+                  value:
+                    message: "User not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                error: "An unexpected error occurred while deleting the user"
+
+    get:
+      summary: Retrieve User Information
+      description: Retrieves user information using a token stored in cookies.
+      tags:
+        - Users
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              example:
+                id: "1234567890"
+                email: "user@example.com"
+                firstname: "John"
+                lastname: "Doe"
+        '401':
+          description: Unauthorized - Token missing, invalid, or no user ID found
+          content:
+            application/json:
+              examples:
+                TokenNotFound:
+                  value:
+                    TokenNotFound: "Token not found in the cookie"
+                NotValid:
+                  value:
+                    NotValid: "Token is not valid"
+                IdNotFound:
+                  value:
+                    IdNotFound: "ID not found in the token"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              example:
+                invalid: "User not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                error: "An unexpected error occurred while retrieving the user"
+
+  /api/auth/logout:
+    post:
+      summary: User logout endpoint
+      description: Logs out a user by clearing the authentication token cookie and deleting the user session.
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: User logged out successfully
+          headers:
+            Set-Cookie:
+              description: Clears the authentication token cookie
+              schema:
+                type: string
+                example: "token=; HttpOnly; Secure; SameSite=Strict; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+          content:
+            application/json:
+              example:
+                message: "User logged out successfully"
+        '401':
+          description: Invalid or missing authentication token
+          content:
+            application/json:
+              examples:
+                InvalidToken:
+                  value:
+                    error: "invalid Token"
+                NotValid:
+                  value:
+                    error: "token is not Correct"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                error: "An unexpected error occurred during logout"
+
+  /api/tenants:
+    post:
+      summary: Register a new tenant
+      description: Register a new tenant with profile image upload using multipart form data
+      tags:
+        - Tenants
+      security:
+        - CookieAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+                - username
+                - email
+                - password
+                - phone
+                - TenantId
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Profile image of the tenant
+                username:
+                  type: string
+                  example: marojuajay
+                aadhar:
+                  type: string
+                  example: "123456"
+                email:
+                  type: string
+                  format: email
+                  example: marojuajay111@gmail.com
+                business:
+                  type: string
+                  example: Car Dealership
+                password:
+                  type: string
+                  format: password
+                  example: 123456
+                phone:
+                  type: string
+                  example: "90000000"
+                Address:
+                  type: string
+                  example: "123 Main St, Hyderabad, Telangana"
+                TenantId:
+                  type: string
+                  example: "TPX148EDa"
+      responses:
+        '200':
+          description: Registration verification email sent successfully
+          content:
+            application/json:
+              example:
+                message: "User registration verification has been sent to the mail!"
+        '201':
+          description: User already exists
+          content:
+            application/json:
+              example:
+                UserExist: "User already exists, please login"
+        '400':
+          description: Bad request - Missing required fields or no file uploaded
+          content:
+            application/json:
+              examples:
+                MissingFields:
+                  value:
+                    error: "All fields are required for the registration"
+                NoFile:
+                  value:
+                    message: "No file uploaded"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              example:
+                RegistrationError: "An unexpected error occurred during registration"
+
+  /api/tenants/login:
+    post:
+      summary: Tenant Login
+      description: Authenticate a tenant user and generate a session token
+      tags:
+        - Tenants
+      security:
+        - CookieAuth: []  
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: marojuajay111@gmail.com
+                password:
+                  type: string
+                  example: 123456
+      responses:
+        '200':
+          description: Tenant logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tenant Logged in Successfully !!"
+        '400':
+          description: Invalid input or password mismatch
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "All fields are required for the login"
+        '401':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  UserNotFound:
+                    type: string
+                    example: "User not found, please Register"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  LoginError:
+                    type: string
+                    example: "loginError"              
+
+  /api/tenants/:id:
+    get:
+      summary: Verify Tenant Authentication
+      description: Verify the JWT token from cookies and retrieve tenant user data.
+      tags:
+        - Tenants
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Token verified successfully, user data returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+        '401':
+          description: Token not found, invalid, or missing user ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "token not found"
+                  TokenValidationError:
+                    type: string
+                    example: "Token Validation Error"
+                  IdNotFound:
+                    type: string
+                    example: "id not found in the token"
+        '404':
+          description: User not found or token expired.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userDoesNotExist:
+                    type: string
+                    example: "User does not exist or token expired, please login"
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+
+    put:
+      summary: Update Tenant Password
+      description: Allows tenants to update their password after verifying the JWT token.
+      tags:
+        - Tenants
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldpassword:
+                  type: string
+                  example: 123456
+                password:
+                  type: string
+                  example: 123
+      responses:
+        '200':
+          description: Password updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+        '401':
+          description: Authentication or token issues.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "cannot get a token from a cookie"
+                  NotValid:
+                    type: string
+                    example: "token is not correct"
+                  error:
+                    type: string
+                    example: "user ID could not get from a token"
+        '404':
+          description: User not found or password mismatch.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "user does not exist, please register"
+                  passwordMismatch:
+                    type: string
+                    example: "password does not match"
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+    delete:
+      summary: Delete Tenant Account
+      description: Allows tenants to delete their account by verifying a JWT token.
+      tags:
+        - Tenants
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Account deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: "user deleted successfully"
+        '400':
+          description: Token issues or invalid token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "no token found from the cookie"
+        '404':
+          description: User or user metadata not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "user not found, please register"
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/cars:
+    post:
+      summary: Create a Car Listing
+      description: Allows authenticated tenant users to create a car listing with images.
+      tags:
+        - Cars
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                brand:
+                  type: string
+                  example: Toyota
+                model:
+                  type: string
+                  example: Camry
+                year:
+                  type: integer
+                  example: 2022
+                price:
+                  type: number
+                  example: 25000
+                mileage:
+                  type: number
+                  example: 30000
+                fuelType:
+                  type: string
+                  example: Gasoline
+                transmission:
+                  type: string
+                  example: Automatic
+                condition:
+                  type: string
+                  example: Used
+                location:
+                  type: string
+                  example: New York
+                sellerContact:
+                  type: string
+                  example: "+1234567890"
+                description:
+                  type: string
+                  example: "Well-maintained car with no issues."
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Car created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Success:
+                    type: string
+                    example: "Car created successfully"
+        '400':
+          description: Invalid input or missing fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "All fields are required!"
+        '401':
+          description: Unauthorized or token issues.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Token not found or expired, please login"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  CarCreationTimeError:
+                    type: string
+                    example: "Unexpected error occurred"
+    get:
+      summary: Get all car details
+      description: Retrieve details of all cars from the database.
+      tags:
+        - Cars
+      responses:
+        '200':
+          description: Cars retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cars:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  DisplayCarsError:
+                    type: string
+                    example: An error occurred while processing your request
+
+  /api/cars:id:
+    get:
+      summary: Get car details by ID
+      tags:
+        - Cars
+      description: Retrieve car details using the car ID from headers.
+      parameters:
+        - in: header
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the car to retrieve.
+      responses:
+        '200':
+          description: Car details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  car:
+                    type: object
+                    additionalProperties: true
+        '400':
+          description: ID not found in the header.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ID not found
+        '404':
+          description: No car found with the requested ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No car found with the requested ID
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal server error
+    put:
+      summary: Get car details by ID with authentication
+      description: Retrieve car details using the car ID from path parameters, with authentication via token in cookies.
+      tags:
+        - Cars
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the car to retrieve.
+      responses:
+        '200':
+          description: Car details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  YourCar:
+                    type: object
+                    additionalProperties: true
+        '400':
+          description: ID not found in the path.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ID not found
+        '401':
+          description: Unauthorized, token missing or invalid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Token not found or expired, please login
+        '404':
+          description: No car found with the requested ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No car found with this ID
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: An error occurred while processing your request
+    delete:
+      summary: Delete car details by ID with authentication
+      description: Delete car details using the car ID from path parameters, with authentication via token in headers.
+      tags:
+        - Cars
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the car to delete.
+        - in: header
+          name: token
+          required: true
+          schema:
+            type: string
+          description: Authentication token for user verification.
+      responses:
+        '200':
+          description: Car data deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Success:
+                    type: string
+                    example: Car data deleted successfully
+        '400':
+          description: ID not found in the path parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ID not found in the params
+        '401':
+          description: Unauthorized, token missing or invalid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Token not found or expired, please login
+        '404':
+          description: Car not found with the requested ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Car not found
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: An error occurred while processing your request
+
+  /api/cars/search:
+    get:
+      summary: Get filtered car details
+      description: Retrieve car details using optional filters like brand, model, price, and location.
+      tags:
+        - Cars
+      parameters:
+        - in: query
+          name: brand
+          required: false
+          schema:
+            type: string
+          description: Filter cars by brand (case-insensitive).
+        - in: query
+          name: model
+          required: false
+          schema:
+            type: string
+          description: Filter cars by model (case-insensitive).
+        - in: query
+          name: location
+          required: false
+          schema:
+            type: string
+          description: Filter cars by location (case-insensitive).
+        - in: query
+          name: price
+          required: false
+          schema:
+            type: number
+          description: Filter cars by exact price.
+      responses:
+        '200':
+          description: Cars retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cars:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        '404':
+          description: No cars found based on the filters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Cars cannot be retrieved from the database
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filterError:
+                    type: string
+                    example: An error occurred while processing your request
+
+
+
+
+

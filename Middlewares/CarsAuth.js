@@ -107,7 +107,9 @@ const GetSpecificCarsById = async (req, res) => {
     }
     const car = await carsDB.findById(id);
     if (!car) {
-      return res.status(404).json({ error: "No car found with the requested ID" });
+      return res
+        .status(404)
+        .json({ error: "No car found with the requested ID" });
     }
     res.status(200).json({ car });
   } catch (error) {
@@ -146,18 +148,17 @@ const UpdateCarUsingID = async (req, res) => {
 
 // Remove a car from the listing :
 const RemoveCarUsingID = async (req, res) => {
-  
   const { id } = req.params;
   if (!id) {
     return res.status(400).json({ error: "ID not found in the params" });
   }
   try {
     const { token } = req.headers;
-  if (!token) {
-    return res
-      .status(401)
-      .json({ error: "Token not found or expired, please login" });
-  }
+    if (!token) {
+      return res
+        .status(401)
+        .json({ error: "Token not found or expired, please login" });
+    }
     const decode = jwt.verify(token, process.env.JWT_SECRET);
     if (!decode) {
       return res.status(401).json({ error: "User authentication failed" });
@@ -189,7 +190,7 @@ const SearchCarUsingDetails = async (req, res) => {
     if (price) filters.price = Number(price);
     const cars = await carsDB.find(filters);
     if (!cars) {
-      return res.status(404).json({ error: "Cars cannot be retrieved from the database" });
+      return res.status(404).json({ error: "No Data Exist on the Database" });
     }
     res.status(200).json({ cars });
   } catch (error) {

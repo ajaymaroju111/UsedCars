@@ -59,7 +59,7 @@ const UserRegister = async (req, res) => {
       phone,
     });
     await user.save();
-    const FullName = `${user.firstname} ${user.middlename} ${user.lastname}`;
+    const FullName = `${user.firstname} ${user.lastname}`;
     await sendEmail({
       to: user.email,
       subject: "Account Conformation for UsedCars Platform",
@@ -126,7 +126,7 @@ const Login = async (req, res) => {
       userId: user._id,
       userToken: token,
     });
-    Session.save();
+    await Session.save();
     console.log({
       login: "user logged in Successfully",
       Cookie: true,
@@ -355,7 +355,7 @@ const DeleteUserAccount = async (req, res) => {
     if (!id) {
       return res.status(400).json({ message: "user id not found in token" });
     }
-    const userMeta = await Meta.findOneAndDelete({ id });
+    const userMeta = await Meta.findByIdAndDelete(id);
     if (!userMeta) {
       return res.status(404).json({ message: "user not found" });
     }

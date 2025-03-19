@@ -7,13 +7,15 @@ const {
   TenantRegister,
   GetTenantProfileById,
   UpdateTenantProfile,
-  DeleteTenantAccount
+  DeleteTenantAccount,
+  TenantLogin
 } = require("../Middlewares/TenantAuth.js");
 
 router.use(cookieParser());
 
 // Routes for tenants:
 router.post('/', upload.single('image'), TenantRegister);
+router.post('/login', TenantLogin);
 router.get('/:id', GetTenantProfileById);
 router.put('/:id', UpdateTenantProfile);
 router.delete('/:id', DeleteTenantAccount);
