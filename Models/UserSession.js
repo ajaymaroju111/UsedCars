@@ -10,12 +10,12 @@ const UserSessionSchema = new mongoose.Schema({
   VerifyToken : {
     type : String,
   },
-  tokenExpiresIn : {
-    type : Date,
-  },
   expiryTime : {
     type : Date
   }
+},{
+  timestamps : true,
+  timeseries : true
 })
 
 module.exports = mongoose.model('sessions' , UserSessionSchema);

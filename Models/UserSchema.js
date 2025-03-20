@@ -29,7 +29,6 @@ const userData = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 8,
-      select: false, // Prevent password from showing in queries
     },
     phone: {
       type: String,

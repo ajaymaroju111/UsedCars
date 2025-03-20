@@ -12,8 +12,16 @@ const {
 // User Registration :
 const UserRegister = async (req, res) => {
   try {
-    const { fullname, email, password, phone, address, account_type } = req.body;
-    if (!fullname || !email || !password || !phone || !address || !account_type) {
+    const { fullname, email, password, phone, address, account_type } =
+      req.body;
+    if (
+      !fullname ||
+      !email ||
+      !password ||
+      !phone ||
+      !address ||
+      !account_type
+    ) {
       return res
         .status(401)
         .json({ error: "All fields are required for the registration" });
@@ -51,19 +59,19 @@ const UserRegister = async (req, res) => {
     await sendEmail({
       to: user.email,
       subject: "Account Conformation for UsedCars Platform",
-      text: AccountConformationafterRegister(user.fullName, Registertoken),
+      text: AccountConformationafterRegister(user.fullname, Registertoken),
     });
-    //create and store token in Sessions collection : 
-    const session = await sessions.create({
-      useremail : user.email,
-      userId : user._id,
-      VerifyToken : Registertoken,
-      expiryTime : (Date.now() + 10*60*1000),
+    //create and store token in Sessions collection :
+    const session = await Sessions.create({
+      useremail: user.email,
+      userId: user._id,
+      VerifyToken: Registertoken,
+      expiryTime: Date.now() + 10 * 60 * 1000,
     });
     await session.save();
     return res.status(200).json({
       message:
-      "user registration conformation has send to the email !!  Please Verify",
+        "user registration conformation has send to the email !!  Please Verify",
     });
   } catch (error) {
     console.log(`registration error : ${error}`);
@@ -71,59 +79,69 @@ const UserRegister = async (req, res) => {
   }
 };
 
-// user registration conformation : 
-const ConformUserRegister = async(req , res) =>{
+// user registration conformation :
+const ConformUserRegister = async (req, res) => {
   try {
-    const {email , Registertoken} = req.body;
-    if(!email || !Registertoken){
+    const { email, Registertoken } = req.body;
+    if (!email || !Registertoken) {
       return res.status(401).json({
-        error : "All fields are required please enter"
+        error: "All fields are required please enter",
       });
     }
-    //check for the user exist or not : 
+    //check for the user exist or not :
     const user = await users.findOne({ email });
-    if(!user){
+    if (!user) {
       return res.status(404).json({
-        message : "User not found"
+        message: "User not found",
       });
     }
-    const session = await sessions.findOne({ useremail : email });
-    if(!session){
+    //check weather the users sessions exist or not :
+    const session = await Sessions.findOne({ useremail: email });
+    if (!session) {
       return res.status(404).json({
-        message : "session not found"
+        message: "session not found",
       });
     }
-    const isTokenValid = (session.VerifyToken === Registertoken);
-    const validId = (session.userId == user._id);
-    if(!isTokenValid){
+    //check weather the time expired or not :
+    if (Date.now() > session.expiryTime) {
+      await users.deleteOne({ email });
+      await Sessions.deleteOne({email});
+      console.log("all data deleted");
       return res.status(401).json({
-        message : "token register authentication failed"
+        message: "Time expired!!.. please register again",
       });
     }
-    if(!validId){
+    const isTokenValid = session.VerifyToken === Registertoken;
+    const validId = session.userId == user._id;
+    if (!isTokenValid) {
       return res.status(401).json({
-        message : "user register authentication failed"
+        message: "token register authentication failed",
       });
     }
-    //free up the space in sessions : 
+    if (!validId) {
+      return res.status(401).json({
+        message: "user register authentication failed",
+      });
+    }
+    //free up the space in sessions :
     const cleared = await sessions.deleteMany({ email });
-    if(!cleared){
+    if (!cleared) {
       return res.status(401).json({
-        message : "sessions data doesnot deleted"
+        message: "sessions data doesnot deleted",
       });
     }
-    user.status = 'active';
+    user.status = "active";
     await user.save();
     return res.status(200).json({
-      message : "user verified Succesfully"
-    }) 
+      message: "user verified Succesfully",
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      error : "internal Server error"
-    })
+      error: "internal Server error",
+    });
   }
-}
+};
 
 //user login using  email and  password
 const Login = async (req, res) => {
@@ -141,15 +159,15 @@ const Login = async (req, res) => {
         .json({ UserNotExist: "user does not exist!!.. please register" });
     }
 
-    //chack weather the user is active or not : 
-    if (!(user.status === 'active')) {
+    //chack weather the user is active or not :
+    if (!(user.status === "active")) {
       return res
         .status(401)
         .json({ message: "user is not active please verify the email" });
     }
     //compare the password :
-    const isPass = await bcrypt.compare(password, user.password);
-    if (!isPass) {
+    const pass = await bcrypt.compare(password, user.password);
+    if (!pass) {
       return res.status(400).json({ IncorrectPassword: `incorrect password` });
     }
     //create a token :
@@ -165,9 +183,9 @@ const Login = async (req, res) => {
       Cookie: true,
       status: 200,
     });
-    return res.status(200).json({ 
+    return res.status(200).json({
       Success: "User Logged in Successfully !!",
-     });
+    });
   } catch (error) {
     console.log(`login error : ${error}`);
     return res.status(500).json({
@@ -217,12 +235,12 @@ const getProfile = async (req, res) => {
         .status(404)
         .json({ UserNotFound: "User not found please register" });
     }
-    if(!(user.status === 'active')) {
+    if (!(user.status === "active")) {
       return res
         .status(401)
         .json({ message: "user is not active please verify the email" });
     }
-    res.status(200).json(user);
+    res.status(200).json(user.fullname);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: `NotGettingProfile ${error}` });
@@ -240,7 +258,7 @@ const forgetPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({ NoUserExist: "User does not Exist" });
     }
-    if(!(user.status === 'active')) {
+    if (!(user.status === "active")) {
       return res
         .status(401)
         .json({ message: "user is not active please verify the email" });
@@ -288,7 +306,8 @@ const resetPassword = async (req, res) => {
         .status(400)
         .json({ PasswordDoesnotMatch: "old password does not match" });
     }
-    const newHashedpassword = await bcrypt.hash(newPassword, 10);
+    const SaltRounds = bcrypt.genSaltSync(10);
+    const newHashedpassword = await bcrypt.hash(newPassword, SaltRounds);
     user.password = newHashedpassword;
     await user.save();
     return res
@@ -320,12 +339,12 @@ const GetProfileById = async (req, res) => {
     if (!user) {
       return res.status(404).json({ invalid: "User not found" });
     }
-    if(!(user.status === 'active')) {
+    if (!(user.status === "active")) {
       return res
         .status(401)
         .json({ message: "user is not active please verify the email" });
     }
-    return res.status(200).json({ user });
+    return res.status(200).json(user.fullname);
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -355,7 +374,7 @@ const UpdateUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "user does not exist" });
     }
-    if(!(user.status === 'active')) {
+    if (!(user.status === "active")) {
       return res
         .status(401)
         .json({ message: "user is not active please verify the email" });
@@ -391,15 +410,27 @@ const DeleteUserAccount = async (req, res) => {
     if (!id) {
       return res.status(400).json({ message: "user id not found in token" });
     }
-    const user = await Data.findByIdAndDelete(id);
+    const user = await users.findById(id);
     if (!user) {
       return res.status(404).json({ message: "user not found" });
     }
-    //check weather the user is active or inactive : 
-    if(!(user.status === 'active')) {
+    //check weather the user is active or inactive :
+    if (!(user.status === "active")) {
       return res
         .status(401)
         .json({ message: "user is not active please verify the email" });
+    }
+    const target = await users.findByIdAndDelete(id);
+    if (!target) {
+      return res
+        .status(404)
+        .json({ message: "error occured in deleting the account" });
+    }
+    const clearSessions = await Sessions.findByIdAndDelete(id);
+    if (!clearSessions) {
+      return res.status(401).json({
+        message: "error occured in clear session operation",
+      });
     }
     return res.status(200).json({ success: "user deleted Successfully" });
   } catch (error) {
@@ -407,7 +438,6 @@ const DeleteUserAccount = async (req, res) => {
     return res.status(500).json({ error });
   }
 };
-
 
 module.exports = {
   UserRegister,
