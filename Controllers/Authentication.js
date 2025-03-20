@@ -132,6 +132,9 @@ const ConformUserRegister = async (req, res) => {
     }
     user.status = "active";
     await user.save();
+    session.VerifyToken = undefined;
+    session.expiryTime = undefined;
+    await session.save();
     return res.status(200).json({
       message: "user verified Succesfully",
     });
