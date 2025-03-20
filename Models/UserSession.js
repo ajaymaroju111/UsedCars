@@ -15,7 +15,7 @@ const UserSessionSchema = new mongoose.Schema({
   }
 },{
   timestamps : true,
-  timeseries : true
+  timeseries : true,
 })
 
 module.exports = mongoose.model('sessions' , UserSessionSchema);
