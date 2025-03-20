@@ -7,7 +7,7 @@ tags:
   - name: Cars
     description: Operations related to cars
   - name: admin
-    description: Operations related to car admin
+    description: Operations related to admin account
 servers:
   - url: http://localhost:3001
     description: Local server
@@ -1079,13 +1079,14 @@ paths:
                     type: string
                     example: An error occurred while processing your request
 
-  /api/auth/deactivate:
-    post:
-      summary: Deactivate a user account
-      description: Deactivates a user account by setting its status to inactive.
+  /api/admin/deactivate:
+    put:
+      summary: Set user account status to inactive
+      description: Admin can deactivate a user's account using their ID.
       tags:
         - admin
-      operationId: deactivateUser
+      security:
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -1095,58 +1096,105 @@ paths:
               properties:
                 targetId:
                   type: string
-                  description: The ID of the user to deactivate.
+                  description: The ID of the user to be deactivated.
       responses:
-        '200':
-          description: User account deactivated successfully.
+        200:
+          description: Account status successfully set to inactive.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Account status set to be INACTIVE successfully.
-        '400':
-          description: Bad Request - ID not found.
+              example:
+                message: "Account status set to INACTIVE successfully."
+        400:
+          description: Bad request (e.g., missing targetId).
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: ID not found.
-        '401':
-          description: Unauthorized - Token not found or user is not authorized.
+              example:
+                message: "Target ID is not received."
+        401:
+          description: Unauthorized (e.g., invalid or missing token).
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Token not found or expired, please login.
-        '404':
-          description: Not Found - User not found.
+              examples:
+                NoToken:
+                  value:
+                    error: "Token not found or expired, please login."
+                AuthFailed:
+                  value:
+                    error: "User authentication failed."
+        403:
+          description: Forbidden (e.g., non-admin or inactive user).
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: User not found.
-        '500':
-          description: Internal Server Error.
+              examples:
+                NotAdmin:
+                  value:
+                    message: "You are not authorized for this operation."
+                UserInactive:
+                  value:
+                    error: "User is inactive."
+        404:
+          description: User not found.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Internal server error.
+              example:
+                message: "No target user found with the given ID."
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              example:
+                error: "Internal server error."
+
+  /api/admin/deleteuser:
+    delete:
+      summary: Delete a user by Admin
+      description: Admin can delete a user using the ObjectId
+      tags:
+        - admin
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetId:
+                  type: string
+                  description: The ID of the user to be deactivated.
+      responses:
+        200:
+          description: User deleted successfully
+          content:
+            application/json:
+              example:
+                message: "deleted_Succesfully"
+                status: 200
+        400:
+          description: Invalid ObjectId or User ID not found
+          content:
+            application/json:
+              example:
+                error: "Invalid User ID"
+        401:
+          description: Unauthorized or inactive user
+          content:
+            application/json:
+              example:
+                error: "User is inactive or Unauthorized"
+        404:
+          description: User not found
+          content:
+            application/json:
+              example:
+                error: "User not found"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                deletionError: "Internal Server Error"
 
 
 

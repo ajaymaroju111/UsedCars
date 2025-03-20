@@ -5,9 +5,12 @@ router.use(cookieParser());
 
 const {
   SetInactiveAccount,
+  DeleteanotherUserUsingId,
+  
 } = require('../Controllers/adminAuth.js');
 
 router.put('/deactivate', SetInactiveAccount);
+router.delete('/deleteuser', DeleteanotherUserUsingId);
 
 
 module.exports = router;

@@ -111,7 +111,7 @@ const ConformUserRegister = async (req, res) => {
         message: "Time expired!!.. please register again",
       });
     }
-    const isTokenValid = session.VerifyToken === Registertoken;
+    const isTokenValid = (session.VerifyToken === Registertoken);
     const validId = session.userId == user._id;
     if (!isTokenValid) {
       return res.status(401).json({
@@ -124,7 +124,7 @@ const ConformUserRegister = async (req, res) => {
       });
     }
     //free up the space in sessions :
-    const cleared = await sessions.deleteMany({ email });
+    const cleared = await Sessions.deleteMany({ email });
     if (!cleared) {
       return res.status(401).json({
         message: "sessions data doesnot deleted",
