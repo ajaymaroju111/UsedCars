@@ -133,7 +133,7 @@ const DeleteanotherUserUsingId = async (req, res) => {
     });
   }
 };
-
+ 
 module.exports = {
   SetInactiveAccount,
   DeleteanotherUserUsingId,
