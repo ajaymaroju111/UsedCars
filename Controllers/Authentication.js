@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const users = require("../Models/UserSchema.js");
 const Sessions = require("../Models/UserSession.js");
+const Cars = require('../Models/CarsSchema.js')
 const { sendEmail } = require("../Nodemailer/Mails.js");
 const { CreateToken } = require("../Middlewares/Tokens/UserToken.js");
 const {
@@ -434,6 +435,12 @@ const DeleteUserAccount = async (req, res) => {
       return res.status(401).json({
         message: "error occured in clear session operation",
       });
+    }
+    const isPostDeleted = await Cars.deleteMany({ owner_id : id })
+    if(!isPostDeleted){
+      return res.status(401).json({
+        message : "error occured in Post delete operation"
+      })
     }
     return res.status(200).json({ success: "user deleted Successfully" });
   } catch (error) {

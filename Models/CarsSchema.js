@@ -3,17 +3,22 @@ const mongoose = require('mongoose');
 const CarsSchema = new mongoose.Schema({
   brand: 
   { type: String, 
-    required: true 
-  }, // Brand (e.g., Toyota, Honda)
+    required: true,
+    lowercase: true, // Converts to lowercase
+    trim: true
+  },
   model: 
   { type: String, 
-    required: true 
-  }, // Model (e.g., Corolla, Civic)
+    required: true,
+    lowercase: true, // Converts to lowercase
+    trim: true
+  }, 
   year: 
   { 
     type: Number, 
-    required: true 
-  }, // Manufacturing year
+    required: true,
+    trim : true,
+  }, 
   price: 
   { type: Number, 
     required: true 
@@ -25,7 +30,9 @@ const CarsSchema = new mongoose.Schema({
   fuelType: 
   { type: String, 
     enum: ["Petrol", "Diesel", "Electric", "Hybrid"], 
-    required: true 
+    required: true,
+    lowercase: true, // Converts to lowercase
+    trim: true
   }, // Fuel type
   transmission: 
   { type: String, 
@@ -35,28 +42,16 @@ const CarsSchema = new mongoose.Schema({
   condition: 
   { type: String, 
     enum: ["New", "Used"], 
-    required: true 
+    required: true ,
+    lowercase: true, // Converts to lowercase
+    trim: true
   }, // Car condition
   location: 
   { type: String, 
-    required: true 
-  }, // Seller location
-  sellerContact:
-   {
-    name: {
-       type: String, 
-       required: true 
-      },
-    phone: 
-    { 
-      type: String, 
-      required: true 
-    },
-    email: 
-    { type: String, 
-      required: true 
-    }
-  }, 
+    required: true,
+    lowercase: true, // Converts to lowercase
+    trim: true
+  },
   images: 
   {    
     name: String,

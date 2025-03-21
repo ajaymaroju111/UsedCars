@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const mongoose = require("mongoose");
 const users = require("../Models/UserSchema.js");
 dotenv.config();
 const Cars = require("../Models/CarsSchema.js");
@@ -44,7 +45,6 @@ const UploadNewCar = async (req, res) => {
       transmission,
       condition,
       location,
-      sellerContact,
       description,
     } = req.body;
     if (
@@ -57,7 +57,6 @@ const UploadNewCar = async (req, res) => {
       !transmission ||
       !condition ||
       !location ||
-      !sellerContact ||
       !description
     ) {
       return res.status(400).json({ error: "All fields are required!" });
@@ -76,7 +75,6 @@ const UploadNewCar = async (req, res) => {
       transmission,
       condition,
       location,
-      sellerContact,
       images: {
         name: req.file.originalname,
         img: {
@@ -100,7 +98,7 @@ const UploadNewCar = async (req, res) => {
 // Get the list of all cars :
 const GetAllCarsList = async (req, res) => {
   try {
-    const cars = await carsDB.find();
+    const cars = await Cars.find();
     return res.status(200).json({ cars });
   } catch (error) {
     console.log(error);
@@ -111,7 +109,8 @@ const GetAllCarsList = async (req, res) => {
 // Get a specific car details based on ID :
 const GetSpecificCarsById = async (req, res) => {
   try {
-    const carid = req.params;
+    const carid = req.headers["authentication"];
+    console.log(carid);
     const { token } = req.cookies;
     if (!carid) {
       return res.status(400).json({ error: "ID not found" });
@@ -138,7 +137,7 @@ const GetSpecificCarsById = async (req, res) => {
         .status(401)
         .json({ message: "user is not active please verify the email" });
     }
-    const car = await Cars.findById(id);
+    const car = await Cars.findById(carid);
     if (!car) {
       return res
         .status(404)
@@ -155,6 +154,10 @@ const GetSpecificCarsById = async (req, res) => {
 const UpdateCarUsingID = async (req, res) => {
   try {
     const { token } = req.cookies;
+    const { carid, newprice } = req.body;
+    if (!carid || newprice) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
     if (!token) {
       return res
         .status(401)
@@ -165,34 +168,37 @@ const UpdateCarUsingID = async (req, res) => {
       return res.status(401).json({ error: "User authentication failed" });
     }
     const id = decode.id;
-    if(!id){
+    if (!id) {
       return res.status(401).json({
-        message : "user ID can not fetched in cookie"
+        message: "user ID can not fetched in cookie",
+      });
+    }
+    const user = await users.findById(id);
+    if (!user) {
+      return res.status(400).json({
+        message: "No user Exist on this ID",
       });
     }
     if (!(user.status === "active")) {
-      return res.status(401).json({ error: "User is inactive please conform your account" });
+      return res
+        .status(401)
+        .json({ error: "User is inactive please confirm your account" });
     }
-    const user = await users.findById(id);
-    if(!user){
-      return res.status(400).json({
-        message : "No user Exist on this ID"
-      });
-    }
-    const { carid } = req.params;
-    if (!carid) {
-      return res.status(400).json({ error: "ID not found" });
-    }
-    const car = await Cars.findById(car);
+    const car = await Cars.findById(carid);
     if (!car) {
       return res.status(404).json({ error: "No car found with this ID" });
     }
-    if(!(user._id != car.owner_id)){
+    if (user._id.toString() !== car.owner_id.toString()) {
       return res.status(401).json({
-        message : "you are not authorized"
+        message: "you are not authorized",
       });
     }
-    res.status(200).json({ YourCar: car });
+    car.price = newprice;
+    await car.save();
+    res.status(200).json({
+      YourCar: car.brand,
+      newprice: car.price,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });
@@ -202,6 +208,10 @@ const UpdateCarUsingID = async (req, res) => {
 // Remove a car from the listing :
 const RemoveCarUsingID = async (req, res) => {
   try {
+    const { carid } = req.body;
+    if (!carid) {
+      return res.status(400).json({ error: "ID not found in the params" });
+    }
     const { token } = req.cookies;
     if (!token) {
       return res
@@ -220,31 +230,28 @@ const RemoveCarUsingID = async (req, res) => {
     }
 
     const user = await users.findById(id);
-    if(!user){
+    if (!user) {
       return res.status(400).json({
-        message : "authentication failed please login again"
+        message: "authentication failed please login again",
       });
     }
     if (!(user.status === "active")) {
       return res.status(401).json({ error: "User is inactive" });
     }
-    const { carid } = req.params;
-    if (!carid) {
-      return res.status(400).json({ error: "ID not found in the params" });
-    }
+
     const target = await Cars.findById(carid);
     if (!target) {
       return res.status(404).json({ error: "Car not found" });
     }
-    if(!(user._id != target.owner_id)){
+    if (!(user._id == target.owner_id)) {
       return res.status(401).json({
-        message : "you are not authorized"
+        message: "you are not authorized",
       });
     }
-    const toDelete = await Cars.findByIdAndDelete(id);
-    if(!toDelete){
+    const toDelete = await Cars.findByIdAndDelete(carid);
+    if (!toDelete) {
       return res.status(401).json({
-        message : "Can't find a car on this ID"
+        message: "Can't find a car on this ID",
       });
     }
     return res.status(200).json({ Success: "Car data deleted successfully" });
@@ -253,25 +260,34 @@ const RemoveCarUsingID = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-
+ 
 // Search car based on the brand, model, price, location :
+
 const SearchCarUsingDetails = async (req, res) => {
-  const { brand, model, price, location } = req.body;
+  const { brand, model, price, location } = req.headers;
+  console.log(brand, model, price, location);
   try {
     let filters = {};
     // All the filters conditions : Case-insensitive search
     if (model) filters.model = { $regex: model, $options: "i" };
     if (brand) filters.brand = { $regex: brand, $options: "i" };
     if (location) filters.location = { $regex: location, $options: "i" };
-    if (price) filters.price = Number(price);
+    if (price) {
+      const parsedPrice = Number(price);
+      if (!isNaN(parsedPrice)) {
+        filters.price = parsedPrice;
+      } else {
+        return res.status(400).json({ error: "Invalid price value" });
+      }
+    }
     const cars = await Cars.find(filters);
-    if (!cars) {
-      return res.status(404).json({ error: "No Data Exist on the Database" });
+    if (cars.length === 0) {
+      return res.status(404).json({ error: "No cars found matching the criteria" });
     }
     res.status(200).json({ cars });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ filterError: error.message });
+    res.status(500).json({ filterError: "Internal Server Error" });
   }
 };
 

@@ -112,6 +112,15 @@ const DeleteanotherUserUsingId = async (req, res) => {
         message : "sessions not found"
       })
     }
+    console.log("user Deleted");
+    console.log("user sessions deleted")
+    const isPostDeleted = await Cars.deleteMany({ owner_id : targetId })
+    if(!isPostDeleted){
+      return res.status(401).json({
+        message : "error occured in Post delete operation"
+      })
+    }
+    console.log("posts deleted");
     console.log("user deleted Succesfully");
     return res.status(200).json({
       message : "deleted_Succesfully",

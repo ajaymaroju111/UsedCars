@@ -20,6 +20,11 @@ components:
       in: cookie
       name: token
       description: Authentication cookie containing the JWT token
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: authorization
+      description: API key for accessing protected endpoints
 info:
   title: Used Cars API
   description: API for usedCars Website
@@ -431,7 +436,7 @@ paths:
       tags:
         - Users
       security:
-        - ApiKeyAuth: []
+        - CookieAuth: []
       requestBody:
         required: true
         content:
@@ -660,13 +665,10 @@ paths:
                 location:
                   type: string
                   example: "New York"
-                sellerContact:
-                  type: string
-                  example: "+123456789"
                 description:
                   type: string
                   example: "Well-maintained car with low mileage."
-                images:
+                image:
                   type: string
                   format: binary
                   description: The image file of the car.
@@ -766,25 +768,108 @@ paths:
                     type: string
                     example: An error occurred while processing your request
 
-  /api/cars:id:
+  /api/cars/filter:
     get:
-      summary: Retrieve car details by ID
-      description: Fetches the details of a car using its ID. Requires a valid JWT token for authentication.
+      summary: Search for cars
+      description: Retrieve a list of cars based on search filters such as brand, model, location, and price provided in headers.
       tags:
         - Cars
       security:
         - CookieAuth: []
-      operationId: getCarById
       parameters:
-        - name: carid
-          in: path
+        - name: brand
+          in: header
+          required: false
+          description: The brand of the car to search for.
+          schema:
+            type: string
+        - name: model
+          in: header
+          required: false
+          description: The model of the car to search for.
+          schema:
+            type: string
+        - name: location
+          in: header
+          required: false
+          description: The location where the car is available.
+          schema:
+            type: string
+        - name: price
+          in: header
+          required: false
+          description: The price of the car to search for (numeric).
+          schema:
+            type: number
+            format: float
+      responses:
+        '200':
+          description: A list of cars matching the search criteria.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cars:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The unique identifier for the car.
+                        brand:
+                          type: string
+                          description: The brand of the car.
+                        model:
+                          type: string
+                          description: The model of the car.
+                        location:
+                          type: string
+                          description: The location of the car.
+                        price:
+                          type: number
+                          format: float
+                          description: The price of the car.
+        '400':
+          description: No data exists in the database for the given filters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No Data Exist on the Database
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filterError:
+                    type: string
+                    example: Internal Server Error
+
+  /api/cars/{id}:
+    get:
+      summary: Retrieve a car by ID
+      description: This endpoint retrieves the car details based on the authenticated user.
+      tags:
+        - Cars
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: authentication
+          in: header
           required: true
-          description: The ID of the car to retrieve.
+          description: The ID of the car.
           schema:
             type: string
       responses:
         '200':
-          description: Car details retrieved successfully.
+          description: Successful retrieval of car information.
           content:
             application/json:
               schema:
@@ -795,21 +880,14 @@ paths:
                     properties:
                       id:
                         type: string
-                        example: "car123"
-                      owner_id:
+                      make:
                         type: string
-                        example: "user456"
                       model:
                         type: string
-                        example: "Tesla Model S"
                       year:
                         type: integer
-                        example: 2021
-                      status:
-                        type: string
-                        example: "available"
         '400':
-          description: Bad Request - Car ID not found.
+          description: ID not found.
           content:
             application/json:
               schema:
@@ -819,7 +897,7 @@ paths:
                     type: string
                     example: "ID not found"
         '401':
-          description: Unauthorized - Token issues or user is inactive.
+          description: Unauthorized access due to missing or invalid token.
           content:
             application/json:
               schema:
@@ -838,7 +916,7 @@ paths:
                     type: string
                     example: "user is not active please verify the email"
         '404':
-          description: Not Found - User or car not found.
+          description: User or car not found.
           content:
             application/json:
               schema:
@@ -851,7 +929,7 @@ paths:
                     type: string
                     example: "No car found with the requested ID"
         '500':
-          description: Internal Server Error.
+          description: Internal server error.
           content:
             application/json:
               schema:
@@ -861,23 +939,31 @@ paths:
                     type: string
                     example: "Internal server error"
     put:
-      summary: Retrieve car details by ID
-      description: Fetches the details of a car using its ID. Requires a valid JWT token for authentication.
+      summary: Update car price
+      description: This endpoint updates the price of a car based on the authenticated user.
       tags:
         - Cars
       security:
         - CookieAuth: []
-      operationId: getCarById
-      parameters:
-        - name: carid
-          in: path
-          required: true
-          description: The ID of the car to retrieve.
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                carid:
+                  type: string
+                  description: The ID of the car to be updated.
+                newprice:
+                  type: number
+                  description: The new price for the car.
+              required:
+                - carid
+                - newprice
       responses:
         '200':
-          description: Car details retrieved successfully.
+          description: Successful update of car information.
           content:
             application/json:
               schema:
@@ -888,34 +974,26 @@ paths:
                     properties:
                       id:
                         type: string
-                        example: "car123"
-                      owner_id:
+                      make:
                         type: string
-                        example: "user456"
                       model:
                         type: string
-                        example: "Tesla Model S"
                       year:
                         type: integer
-                        example: 2021
-                      status:
-                        type: string
-                        example: "available"
+                      price:
+                        type: number
         '400':
-          description: Bad Request - Car ID not found or user not found.
+          description: Bad request due to missing fields or user issues.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  error:
-                    type: string
-                    example: "ID not found"
                   message:
                     type: string
-                    example: "No user Exist on this ID"
+                    example: "All fields are required"
         '401':
-          description: Unauthorized - Token issues or user is inactive.
+          description: Unauthorized access due to token issues or user status.
           content:
             application/json:
               schema:
@@ -928,7 +1006,7 @@ paths:
                     type: string
                     example: "User is inactive please confirm your account"
         '404':
-          description: Not Found - No car found with the requested ID.
+          description: Car not found.
           content:
             application/json:
               schema:
@@ -938,7 +1016,7 @@ paths:
                     type: string
                     example: "No car found with this ID"
         '500':
-          description: Internal Server Error.
+          description: Internal server error.
           content:
             application/json:
               schema:
@@ -948,23 +1026,27 @@ paths:
                     type: string
                     example: "Internal server error"
     delete:
-      summary: Delete a car
-      description: Deletes a car from the database by its ID.
+      summary: Delete a car by ID
+      description: This endpoint deletes a car based on the authenticated user.
       tags:
         - Cars
       security:
         - CookieAuth: []
-      operationId: deleteCar
-      parameters:
-        - name: carid
-          in: path
-          required: true
-          description: The ID of the car to delete.
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                carid:
+                  type: string
+                  description: The ID of the car to be deleted.
+              required:
+                - carid
       responses:
         '200':
-          description: Car deleted successfully.
+          description: Successful deletion of car information.
           content:
             application/json:
               schema:
@@ -972,19 +1054,22 @@ paths:
                 properties:
                   Success:
                     type: string
-                    example: Car data deleted successfully.
+                    example: "Car data deleted successfully"
         '400':
-          description: Bad Request - Car ID not found or user not authenticated.
+          description: Bad request due to missing car ID or user issues.
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  error:
+                    type: string
+                    example: "ID not found in the params"
                   message:
                     type: string
-                    example: ID not found in the params or authentication failed please login again.
+                    example: "authentication failed please login again"
         '401':
-          description: Unauthorized - User is inactive or not authorized to delete this car.
+          description: Unauthorized access due to token issues or user status.
           content:
             application/json:
               schema:
@@ -992,9 +1077,12 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: User is inactive or you are not authorized.
+                    example: "Token not found or expired, please login"
+                  message:
+                    type: string
+                    example: "you are not authorized"
         '404':
-          description: Not Found - Car not found.
+          description: Car not found.
           content:
             application/json:
               schema:
@@ -1002,72 +1090,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: Car not found.
-        '500':
-          description: Internal Server Error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Internal server error.
-
-  /api/cars/search:
-    get:
-      summary: Get filtered car details
-      description: Retrieve car details using optional filters like brand, model, price, and location.
-      tags:
-        - Cars
-      parameters:
-        - in: query
-          name: brand
-          required: false
-          schema:
-            type: string
-          description: Filter cars by brand (case-insensitive).
-        - in: query
-          name: model
-          required: false
-          schema:
-            type: string
-          description: Filter cars by model (case-insensitive).
-        - in: query
-          name: location
-          required: false
-          schema:
-            type: string
-          description: Filter cars by location (case-insensitive).
-        - in: query
-          name: price
-          required: false
-          schema:
-            type: number
-          description: Filter cars by exact price.
-      responses:
-        '200':
-          description: Cars retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  cars:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: true
-        '404':
-          description: No cars found based on the filters.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Cars cannot be retrieved from the database
+                    example: "Car not found"
         '500':
           description: Internal server error.
           content:
@@ -1075,9 +1098,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  filterError:
+                  error:
                     type: string
-                    example: An error occurred while processing your request
+                    example: "Internal server error"
 
   /api/admin/deactivate:
     put:

@@ -18,9 +18,9 @@ router.use(cookieParser());
 //using Routes for the cars : 
 router.post('/', upload.single('image'), UploadNewCar);
 router.get('/', GetAllCarsList);
-router.get('/:id', GetSpecificCarsById);
-router.put('/:id', UpdateCarUsingID);
-router.delete('/:id', RemoveCarUsingID);
-router.get('/search', SearchCarUsingDetails);
+router.get('/{id}', GetSpecificCarsById);
+router.put('/{id}', UpdateCarUsingID);
+router.delete('/{id}', RemoveCarUsingID);
+router.get('/filter', SearchCarUsingDetails);
 
 module.exports = router;
