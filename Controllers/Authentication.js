@@ -248,14 +248,20 @@ const getProfile = async (req, res) => {
 //sending forget password link to the user email
 const forgetPassword = async (req, res) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
+    const {email} = req.body;
+    if (!email) {
+      return res.status(404).json({ NoUserExist: "please Enter the Email" });
+    }
+    const user = await users.findOne({ email });
+    if(!user){
+      return res.status(400).json({
+        message  : "User doesnot Exist !!..   please Register"
+      });
     }
     await sendEmail({
       to: user.email,
       subject: "Link for the Forget Password",
-      text: forgetPasswordTemplate(),
+      text: forgetPasswordTemplate(user.fullname),
     });
     console.log("Mail sent to the user");
     return res.status(200).json({ Success: "password link sent to the mail" });

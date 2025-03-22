@@ -24,7 +24,7 @@ router.post('/conform', ConformUserRegister);
 router.post('/login' ,Login);
 router.post('/logout' ,LogoutUsingCookie);
 router.get('/me', VerifyUserUsingCookie ,getProfile);
-router.post('/forget-password', VerifyUserUsingCookie ,forgetPassword);
+router.post('/forget-password' ,forgetPassword);
 router.post('/reset-password', VerifyUserUsingCookie ,resetPassword);
 router.get('/:id', VerifyUserUsingCookie ,GetProfileById);
 router.put('/:id', VerifyUserUsingCookie ,UpdateUserProfile);
