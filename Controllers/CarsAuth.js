@@ -7,28 +7,11 @@ const Cars = require("../Models/CarsSchema.js");
 
 // Create a new car listing :
 const UploadNewCar = async (req, res) => {
-  const { token } = req.cookies;
-  if (!token) {
-    return res
-      .status(401)
-      .json({ error: "Token not found or expired, please login" });
+  const user = req.user;
+  if (!user) {
+    return res.status(404).json({ NoUserExist: "User not recieved" });
   }
-  const decode = jwt.verify(token, process.env.JWT_SECRET); // Verify the token
-  if (!decode) {
-    return res.status(401).json({ error: "User authentication failed" });
-  }
-  const id = decode.id;
-  if (!id) {
-    return res.status(400).json({ error: "ID not found" });
-  }
-  const isUser = await users.findById(id);
-  if (!isUser) {
-    return res.status(404).json({ error: "User not found" });
-  }
-  if (!(isUser.status === "active")) {
-    return res.status(401).json({ error: "User is inactive" });
-  }
-  if (isUser.number_of_uploads > process.env.POST_LIMIT) {
+  if (user.number_of_uploads > user.post_limit) {
     console.log("upload limit exceeded, purchase any plan for further uploads");
     return res.status(402).json({
       message: "upload limit exceeded, purchase any plan for further uploads",
@@ -83,11 +66,11 @@ const UploadNewCar = async (req, res) => {
         },
       },
       description,
-      owner_id: isUser._id,
+      owner_id: user._id,
     });
     await cars.save();
-    isUser.number_of_uploads += 1;
-    await isUser.save();
+    user.number_of_uploads += 1;
+    await user.save();
     return res.status(201).json({ Success: "Car post added successfully" });
   } catch (error) {
     console.log(error);
@@ -109,33 +92,15 @@ const GetAllCarsList = async (req, res) => {
 // Get a specific car details based on ID :
 const GetSpecificCarsById = async (req, res) => {
   try {
-    const carid = req.headers["authentication"];
-    console.log(carid);
-    const { token } = req.cookies;
-    if (!carid) {
-      return res.status(400).json({ error: "ID not found" });
-    }
-    if (!token) {
-      return res.status(401).json({ TokenNotFound: "token not found" });
-    }
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ NotValid: "token is not valid" });
-    }
-    const id = decode.id;
-    if (!id) {
-      return res.status(401).json({ IdNotFound: "id not found in the token" });
-    }
-    const user = await users.findById(id);
+    const user = req.user;
     if (!user) {
-      return res
-        .status(404)
-        .json({ UserNotFound: "User not found please register" });
+      return res.status(404).json({ NoUserExist: "User not recieved" });
     }
-    if (!(user.status === "active")) {
-      return res
-        .status(401)
-        .json({ message: "user is not active please verify the email" });
+    const carid = req.headers["authentication"];
+    if(!carid){
+      return res.status(401).json({
+        error : "car id not Found",
+      });
     }
     const car = await Cars.findById(carid);
     if (!car) {
@@ -151,47 +116,29 @@ const GetSpecificCarsById = async (req, res) => {
 };
 
 // Update a car by using car ID :
+
 const UpdateCarUsingID = async (req, res) => {
   try {
-    const { token } = req.cookies;
-    const { carid, newprice } = req.body;
-    if (!carid || newprice) {
+    const user = req.user;
+    if (!user) {
+      return res.status(404).json({ NoUserExist: "User not recieved" });
+    }
+    const { carId, newprice } = req.body;
+
+    if (!carId || !newprice) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    if (!token) {
-      return res
-        .status(401)
-        .json({ error: "Token not found or expired, please login" });
+
+    if (isNaN(Number(newprice))) {
+      return res.status(400).json({ error: "Invalid price value" });
     }
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ error: "User authentication failed" });
-    }
-    const id = decode.id;
-    if (!id) {
-      return res.status(401).json({
-        message: "user ID can not fetched in cookie",
-      });
-    }
-    const user = await users.findById(id);
-    if (!user) {
-      return res.status(400).json({
-        message: "No user Exist on this ID",
-      });
-    }
-    if (!(user.status === "active")) {
-      return res
-        .status(401)
-        .json({ error: "User is inactive please confirm your account" });
-    }
-    const car = await Cars.findById(carid);
+
+    const car = await Cars.findById(carId);
     if (!car) {
-      return res.status(404).json({ error: "No car found with this ID" });
+      return res.status(404).json({ error: "Data not Found" });
     }
-    if (user._id.toString() !== car.owner_id.toString()) {
-      return res.status(401).json({
-        message: "you are not authorized",
-      });
+    if (!user._id.equals(car.owner_id)) {
+      return res.status(401).json({ message: "You are not authorized" });
     }
     car.price = newprice;
     await car.save();
@@ -208,42 +155,19 @@ const UpdateCarUsingID = async (req, res) => {
 // Remove a car from the listing :
 const RemoveCarUsingID = async (req, res) => {
   try {
-    const { carid } = req.body;
+    const user = req.user;
+    if (!user) {
+      return res.status(404).json({ NoUserExist: "User not recieved" });
+    }
+    const  carid  = req.headers['authentication'];
     if (!carid) {
       return res.status(400).json({ error: "ID not found in the params" });
     }
-    const { token } = req.cookies;
-    if (!token) {
-      return res
-        .status(401)
-        .json({ error: "Token not found or expired, please login" });
-    }
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ error: "User authentication failed" });
-    }
-    const id = decode.id;
-    if (!id) {
-      return res.status(401).json({
-        message: "user ID is not Fetched",
-      });
-    }
-
-    const user = await users.findById(id);
-    if (!user) {
-      return res.status(400).json({
-        message: "authentication failed please login again",
-      });
-    }
-    if (!(user.status === "active")) {
-      return res.status(401).json({ error: "User is inactive" });
-    }
-
-    const target = await Cars.findById(carid);
-    if (!target) {
+    const car = await Cars.findById(carid);
+    if (!car) {
       return res.status(404).json({ error: "Car not found" });
     }
-    if (!(user._id == target.owner_id)) {
+    if (!(user._id == car.owner_id)) {
       return res.status(401).json({
         message: "you are not authorized",
       });
@@ -262,7 +186,6 @@ const RemoveCarUsingID = async (req, res) => {
 };
  
 // Search car based on the brand, model, price, location :
-
 const SearchCarUsingDetails = async (req, res) => {
   const { brand, model, price, location } = req.headers;
   console.log(brand, model, price, location);

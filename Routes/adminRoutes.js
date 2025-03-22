@@ -2,15 +2,14 @@ const express = require('express');
 const router = express.Router();
 const cookieParser = require('cookie-parser');
 router.use(cookieParser());
+const {VerifyUserUsingCookie} = require('../Middlewares/verifyUser.js');
 
 const {
   SetInactiveAccount,
-  DeleteanotherUserUsingId,
-  
+  manageUsersPostCount,
 } = require('../Controllers/adminAuth.js');
 
-router.put('/deactivate', SetInactiveAccount);
-router.delete('/deleteuser', DeleteanotherUserUsingId);
-
+router.put('/deactivate',VerifyUserUsingCookie,SetInactiveAccount);
+router.put('/postlimit',VerifyUserUsingCookie,manageUsersPostCount);
 
 module.exports = router;

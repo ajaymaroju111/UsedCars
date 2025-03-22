@@ -55,6 +55,10 @@ const userData = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    post_limit : {
+      type : Number,
+      default : 5,
+    }
   },
   { timestamps: true }
 );

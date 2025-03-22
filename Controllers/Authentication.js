@@ -2,9 +2,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const users = require("../Models/UserSchema.js");
 const Sessions = require("../Models/UserSession.js");
-const Cars = require('../Models/CarsSchema.js')
+const Cars = require("../Models/CarsSchema.js");
 const { sendEmail } = require("../Nodemailer/Mails.js");
-const { CreateToken } = require("../Middlewares/Tokens/UserToken.js");
+const { CreateToken } = require("../Middlewares/verifyUser.js");
 const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
@@ -56,17 +56,17 @@ const UserRegister = async (req, res) => {
       account_type,
     });
     await user.save();
-    const Registertoken = CreateToken(user);
+    const encodedEmail = Buffer.from(email).toString("base64");
     await sendEmail({
       to: user.email,
       subject: "Account Conformation for UsedCars Platform",
-      text: AccountConformationafterRegister(user.fullname, Registertoken),
+      text: AccountConformationafterRegister(user.fullname, encodedEmail),
     });
     //create and store token in Sessions collection :
     const session = await Sessions.create({
       useremail: user.email,
       userId: user._id,
-      VerifyToken: Registertoken,
+      VerifyToken: encodedEmail,
       expiryTime: Date.now() + 10 * 60 * 1000,
     });
     await session.save();
@@ -106,13 +106,17 @@ const ConformUserRegister = async (req, res) => {
     //check weather the time expired or not :
     if (Date.now() > session.expiryTime) {
       await users.deleteOne({ email });
-      await Sessions.deleteOne({email});
+      await Sessions.deleteOne({ email });
       console.log("all data deleted");
       return res.status(401).json({
         message: "Time expired!!.. please register again",
       });
     }
-    const isTokenValid = (session.VerifyToken === Registertoken);
+    const decodedEmail = Buffer.from(session.VerifyToken, "base64").toString(
+      "utf8"
+    );
+    //decode the email using Buffer:
+    const isTokenValid = decodedEmail === Registertoken;
     const validId = session.userId == user._id;
     if (!isTokenValid) {
       return res.status(401).json({
@@ -175,7 +179,14 @@ const Login = async (req, res) => {
       return res.status(400).json({ IncorrectPassword: `incorrect password` });
     }
     //create a token :
-    const token = CreateToken(user);
+    const data = {
+      id: user._id,
+      email: user.email,
+      status: user.status,
+    };
+    const key = process.env.JWT_SECRET;
+    const expiry = { expiresIn: "1h" };
+    const token = jwt.sign(data, key, expiry);
     //cookie is generated :
     await res.cookie("token", token, {
       httpOnly: true,
@@ -221,51 +232,25 @@ const LogoutUsingCookie = async (req, res) => {
 //get user profile by user ID and only when the user is active :
 const getProfile = async (req, res) => {
   try {
-    const { token } = req.cookies;
-    if (!token) {
-      return res.status(401).json({ TokenNotFound: "token not found" });
-    }
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ NotValid: "token is not valid" });
-    }
-    const id = decode.id;
-    if (!id) {
-      return res.status(401).json({ IdNotFound: "id not found in the token" });
-    }
-    const user = await users.findById(id);
+    const user = req.user;
     if (!user) {
-      return res
-        .status(404)
-        .json({ UserNotFound: "User not found please register" });
-    }
-    if (!(user.status === "active")) {
-      return res
-        .status(401)
-        .json({ message: "user is not active please verify the email" });
+      return res.status(404).json({ NoUserExist: "User not recieved" });
     }
     res.status(200).json(user.fullname);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: `NotGettingProfile ${error}` });
+    res.status(500).json({
+      error: `NotGettingProfile ${error}`,
+    });
   }
 };
 
 //sending forget password link to the user email
 const forgetPassword = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(401).json({ required: "Email is required" });
-    }
-    const user = await users.findOne({ email });
+    const user = req.user;
     if (!user) {
-      return res.status(404).json({ NoUserExist: "User does not Exist" });
-    }
-    if (!(user.status === "active")) {
-      return res
-        .status(401)
-        .json({ message: "user is not active please verify the email" });
+      return res.status(404).json({ NoUserExist: "User not recieved" });
     }
     await sendEmail({
       to: user.email,
@@ -283,26 +268,15 @@ const forgetPassword = async (req, res) => {
 //user reset password :  No Authentication required
 const resetPassword = async (req, res) => {
   try {
+    const user = req.user;
+    if (!user) {
+      return res.status(404).json({ NoUserExist: "User not recieved" });
+    }
     const { oldPassword, newPassword } = req.body;
-    const { token } = req.cookies;
     if (!oldPassword || !newPassword) {
       return res
         .status(401)
         .json({ required: "old password and new password are required" });
-    }
-    if (!token) {
-      return res
-        .status(400)
-        .json({ TokenNotFound: "token did not found in cookie" });
-    }
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ NotValid: "token is not valid" });
-    }
-    const id = decode.id;
-    const user = await users.findById(id);
-    if (!user) {
-      return res.status(404).json({ userNotFound: "user did not found" });
     }
     const isPass = await bcrypt.compare(oldPassword, user.password);
     if (!isPass) {
@@ -325,28 +299,9 @@ const resetPassword = async (req, res) => {
 //get user profile by id within in the session expire time :
 const GetProfileById = async (req, res) => {
   try {
-    const { token } = req.cookies;
-    if (!token) {
-      return res.status(401).json({
-        TokenNotFound: "token not found in the cookie",
-      });
-    }
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ NotValid: "token is not valid" });
-    }
-    const id = decode.id;
-    if (!id) {
-      return res.status(401).json({ IdNotFound: "id not found in the token" });
-    }
-    const user = await users.findById(id);
+    const user = req.user;
     if (!user) {
-      return res.status(404).json({ invalid: "User not found" });
-    }
-    if (!(user.status === "active")) {
-      return res
-        .status(401)
-        .json({ message: "user is not active please verify the email" });
+      return res.status(404).json({ NoUserExist: "User not recieved" });
     }
     return res.status(200).json(user.fullname);
   } catch (error) {
@@ -356,33 +311,12 @@ const GetProfileById = async (req, res) => {
 
 //update user profile based on cookie :
 const UpdateUserProfile = async (req, res) => {
-  const { token } = req.cookies;
-  const { newemail, newpassword } = req.body;
-  if (!token) {
-    return res
-      .status(401)
-      .json({ message: "cannot get a token from a cookie" });
-  }
   try {
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ NotValid: "token is not Correct" });
-    }
-    const id = decode.id;
-    if (!id) {
-      return res
-        .status(401)
-        .json({ error: "user ID could not get from a token" });
-    }
-    const user = await Data.findById(id);
+    const user = req.user;
     if (!user) {
-      return res.status(404).json({ message: "user does not exist" });
+      return res.status(404).json({ NoUserExist: "User not recieved" });
     }
-    if (!(user.status === "active")) {
-      return res
-        .status(401)
-        .json({ message: "user is not active please verify the email" });
-    }
+    const { newemail, newpassword } = req.body;
     if (newemail) {
       user.email = newemail;
     }
@@ -401,29 +335,12 @@ const UpdateUserProfile = async (req, res) => {
 
 //Delete user account based on the cookie :
 const DeleteUserAccount = async (req, res) => {
-  const { token } = req.cookies;
-  if (!token) {
-    return res.status(400).json({ message: "no token found from the cookie" });
-  }
   try {
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ message: "invalid token" });
-    }
-    const id = decode.id;
-    if (!id) {
-      return res.status(400).json({ message: "user id not found in token" });
-    }
-    const user = await users.findById(id);
+    const user = req.user;
     if (!user) {
-      return res.status(404).json({ message: "user not found" });
+      return res.status(404).json({ NoUserExist: "User not recieved" });
     }
-    //check weather the user is active or inactive :
-    if (!(user.status === "active")) {
-      return res
-        .status(401)
-        .json({ message: "user is not active please verify the email" });
-    }
+    const id = user._id;
     const target = await users.findByIdAndDelete(id);
     if (!target) {
       return res
@@ -436,11 +353,11 @@ const DeleteUserAccount = async (req, res) => {
         message: "error occured in clear session operation",
       });
     }
-    const isPostDeleted = await Cars.deleteMany({ owner_id : id })
-    if(!isPostDeleted){
+    const isPostDeleted = await Cars.deleteMany({ owner_id: id });
+    if (!isPostDeleted) {
       return res.status(401).json({
-        message : "error occured in Post delete operation"
-      })
+        message: "error occured in Post delete operation",
+      });
     }
     return res.status(200).json({ success: "user deleted Successfully" });
   } catch (error) {

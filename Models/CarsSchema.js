@@ -42,12 +42,13 @@ const CarsSchema = new mongoose.Schema({
   condition: 
   { type: String, 
     enum: ["New", "Used"], 
-    required: true ,
+    required: true,
     lowercase: true, // Converts to lowercase
     trim: true
   }, // Car condition
-  location: 
-  { type: String, 
+  location:
+  { 
+    type: String, 
     required: true,
     lowercase: true, // Converts to lowercase
     trim: true
