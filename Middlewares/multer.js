@@ -15,9 +15,11 @@ const fileFilter = (req, file, cb) => {
 
 // Multer configuration with error handling
 const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  storage : storage,
+  fileFilter : fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit
 });
+
+
 
 module.exports = upload;

@@ -2,14 +2,16 @@ const express = require('express');
 const router = express.Router();
 const cookieParser = require('cookie-parser');
 router.use(cookieParser());
-const {VerifyUserUsingCookie} = require('../Middlewares/verifyUser.js');
+const {verifyUserUsingCookie} = require('../Middlewares/verifyUser.js');
 
 const {
-  SetInactiveAccount,
+  setInactiveAccount,
   manageUsersPostCount,
-} = require('../Controllers/adminAuth.js');
+  viewAllActiveAndInactiveUsers,
+} = require('../Controllers/admin/adminAuth.js');
 
-router.put('/deactivate',VerifyUserUsingCookie,SetInactiveAccount);
-router.put('/postlimit',VerifyUserUsingCookie,manageUsersPostCount);
+router.put('/deactivate',verifyUserUsingCookie,setInactiveAccount);
+router.put('/postlimit',verifyUserUsingCookie,manageUsersPostCount);
+router.get('/overview' , verifyUserUsingCookie, viewAllActiveAndInactiveUsers)
 
 module.exports = router;

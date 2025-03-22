@@ -1,20 +1,22 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-const users = require("../Models/UserSchema.js");
+const users = require("../../Models/UserSchema.js");
 dotenv.config();
-const Cars = require("../Models/CarsSchema.js");
+const Cars = require("../../Models/CarsSchema.js");
 
 // Create a new car listing :
-const UploadNewCar = async (req, res) => {
+const uploadNewCar = async (req, res) => {
   const user = req.user;
   if (!user) {
-    return res.status(404).json({ NoUserExist: "User not recieved" });
+    return res.status(404).json({ NoUserExist: "User not received" });
   }
-  if (user.number_of_uploads > user.post_limit) {
-    console.log("upload limit exceeded, purchase any plan for further uploads");
+
+  console.log(user.number_of_uploads, user.post_limit);
+  if (user.number_of_uploads >= user.post_limit) {
+    console.log("Upload limit exceeded, purchase any plan for further uploads");
     return res.status(402).json({
-      message: "upload limit exceeded, purchase any plan for further uploads",
+      message: "Upload limit exceeded, purchase any plan for further uploads",
     });
   }
   try {
@@ -30,6 +32,8 @@ const UploadNewCar = async (req, res) => {
       location,
       description,
     } = req.body;
+
+    // Check for required fields
     if (
       !brand ||
       !model ||
@@ -44,10 +48,22 @@ const UploadNewCar = async (req, res) => {
     ) {
       return res.status(400).json({ error: "All fields are required!" });
     }
-    // Extract file paths of uploaded images
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+
+    // Check if files are uploaded
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded" });
     }
+    console.log(req.files);
+    // Prepare images for storage
+    const carImages = req.files.map(file => ({
+      name: file.originalname,
+      img: {
+        data: file.buffer, // Store buffer data
+        contentType: file.mimetype,
+      },
+    }));
+
+    // Create a new car instance
     const cars = new Cars({
       brand,
       model,
@@ -58,25 +74,26 @@ const UploadNewCar = async (req, res) => {
       transmission,
       condition,
       location,
-      images: {
-        name: req.file.originalname,
-        img: {
-          data: req.file.buffer, // Store buffer data
-          contentType: req.file.mimetype,
-        },
-      },
+      carImages : carImages, // Use the prepared images array
       description,
       owner_id: user._id,
     });
+
+    // Save the car instance
     await cars.save();
+    console.log(cars.carImages);
+
+    // Update the user's number of uploads
     user.number_of_uploads += 1;
     await user.save();
+
     return res.status(201).json({ Success: "Car post added successfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ CarCreationTimeError: error.message });
   }
 };
+
 
 // Get the list of all cars :
 const GetAllCarsList = async (req, res) => {
@@ -97,9 +114,9 @@ const GetSpecificCarsById = async (req, res) => {
       return res.status(404).json({ NoUserExist: "User not recieved" });
     }
     const carid = req.headers["authentication"];
-    if(!carid){
+    if (!carid) {
       return res.status(401).json({
-        error : "car id not Found",
+        error: "car id not Found",
       });
     }
     const car = await Cars.findById(carid);
@@ -159,7 +176,7 @@ const RemoveCarUsingID = async (req, res) => {
     if (!user) {
       return res.status(404).json({ NoUserExist: "User not recieved" });
     }
-    const  carid  = req.headers['authentication'];
+    const carid = req.headers["authentication"];
     if (!carid) {
       return res.status(400).json({ error: "ID not found in the params" });
     }
@@ -184,7 +201,7 @@ const RemoveCarUsingID = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
- 
+
 // Search car based on the brand, model, price, location :
 const SearchCarUsingDetails = async (req, res) => {
   const { brand, model, price, location } = req.headers;
@@ -205,7 +222,9 @@ const SearchCarUsingDetails = async (req, res) => {
     }
     const cars = await Cars.find(filters);
     if (cars.length === 0) {
-      return res.status(404).json({ error: "No cars found matching the criteria" });
+      return res
+        .status(404)
+        .json({ error: "No cars found matching the criteria" });
     }
     res.status(200).json({ cars });
   } catch (error) {
@@ -215,7 +234,7 @@ const SearchCarUsingDetails = async (req, res) => {
 };
 
 module.exports = {
-  UploadNewCar,
+  uploadNewCar,
   GetAllCarsList,
   GetSpecificCarsById,
   UpdateCarUsingID,

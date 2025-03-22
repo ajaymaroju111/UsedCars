@@ -623,13 +623,12 @@ paths:
 
   /api/cars:
     post:
-      summary: Add a new car post
-      description: Allows authenticated users to add a new car post. Requires a valid JWT token for authentication and file upload.
+      summary: Upload a new car
+      operationId: uploadNewCar
       tags:
         - Cars
       security:
         - CookieAuth: []
-      operationId: addCarPost
       requestBody:
         required: true
         content:
@@ -639,42 +638,56 @@ paths:
               properties:
                 brand:
                   type: string
-                  example: "Toyota"
+                  example: TATA
                 model:
                   type: string
-                  example: "Corolla"
+                  example: SUV100
                 year:
                   type: integer
-                  example: 2020
+                  format: int32
+                  example: 2012
                 price:
                   type: number
                   format: float
-                  example: 20000.00
+                  example: 5000000
                 mileage:
                   type: number
-                  example: 15000
+                  format: float
+                  example: 35
                 fuelType:
                   type: string
-                  example: "Petrol"
+                  example: Petrol
                 transmission:
                   type: string
-                  example: "Automatic"
+                  example: Manual
                 condition:
                   type: string
-                  example: "Used"
+                  example: New
                 location:
                   type: string
-                  example: "New York"
+                  example: Hyderabad
                 description:
                   type: string
-                  example: "Well-maintained car with low mileage."
-                image:
-                  type: string
-                  format: binary
-                  description: The image file of the car.
+                  example: "this is latest version"
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+                - brand
+                - model
+                - year
+                - price
+                - mileage
+                - fuelType
+                - transmission
+                - condition
+                - location
+                - description
       responses:
         '201':
-          description: Car post added successfully.
+          description: Car post added successfully
           content:
             application/json:
               schema:
@@ -682,9 +695,8 @@ paths:
                 properties:
                   Success:
                     type: string
-                    example: "Car post added successfully"
         '400':
-          description: Bad Request - Missing required fields or no file uploaded.
+          description: Bad Request (missing fields or no file uploaded)
           content:
             application/json:
               schema:
@@ -692,25 +704,8 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "All fields are required!"
-                  message:
-                    type: string
-                    example: "No file uploaded"
-        '401':
-          description: Unauthorized - Token issues or user is inactive.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Token not found or expired, please login"
-                  message:
-                    type: string
-                    example: "User is inactive"
         '402':
-          description: Payment Required - User has exceeded upload limit.
+          description: Payment Required (upload limit exceeded)
           content:
             application/json:
               schema:
@@ -718,19 +713,17 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "upload limit exceeded, purchase any plan for further uploads"
         '404':
-          description: Not Found - User not found.
+          description: Not Found (user not found)
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  error:
+                  NoUserExist:
                     type: string
-                    example: "User not found"
         '500':
-          description: Internal Server Error.
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -738,35 +731,6 @@ paths:
                 properties:
                   CarCreationTimeError:
                     type: string
-                    example: "Internal server error"
-    get:
-      summary: Get all car details
-      description: Retrieve details of all cars from the database.
-      tags:
-        - Cars
-      responses:
-        '200':
-          description: Cars retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  cars:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: true
-        '500':
-          description: Internal server error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  DisplayCarsError:
-                    type: string
-                    example: An error occurred while processing your request
 
   /api/cars/filter:
     get:
@@ -1197,6 +1161,62 @@ paths:
                   error:
                     type: string
                     example: "Internal Server Error"
+
+  /api/admin/overview:
+    get:
+      summary: Get active and inactive user counts
+      description: This endpoint fetches the count of active and inactive users. Only accessible by admins.
+      tags:
+        - admin
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved user counts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Active_Users:
+                    type: integer
+                    example: 150
+                  InActive_Users:
+                    type: integer
+                    example: 50
+                  Total_Users:
+                    type: integer
+                    example: 200
+        '401':
+          description: Unauthorized - User is not an admin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You are not authorized for this operation
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  NoUserExist:
+                    type: string
+                    example: User not received
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
 
 
 

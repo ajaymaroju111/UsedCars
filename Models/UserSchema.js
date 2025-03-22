@@ -58,6 +58,11 @@ const userData = new mongoose.Schema(
     post_limit : {
       type : Number,
       default : 5,
+    },
+    subscription_type : {
+      type : String,
+      enum : ['standard', 'premium', 'enterprise'],
+      default : 'standard'
     }
   },
   { timestamps: true }

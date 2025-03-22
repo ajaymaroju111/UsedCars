@@ -1,14 +1,14 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const users = require("../Models/UserSchema.js");
-const Sessions = require("../Models/UserSession.js");
-const Cars = require("../Models/CarsSchema.js");
-const { sendEmail } = require("../Nodemailer/Mails.js");
-const { CreateToken } = require("../Middlewares/verifyUser.js");
+const users = require("../../Models/UserSchema.js");
+const Sessions = require("../../Models/UserSession.js");
+const Cars = require("../../Models/CarsSchema.js");
+const { sendEmail } = require("../../Nodemailer/Mails.js");
+const { CreateToken } = require("../../Middlewares/verifyUser.js");
 const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
-} = require("../Nodemailer/MailTemplates/Templates.js");
+} = require("../../Nodemailer/MailTemplates/Templates.js");
 
 // User Registration :
 const UserRegister = async (req, res) => {

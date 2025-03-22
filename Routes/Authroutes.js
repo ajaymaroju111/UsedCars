@@ -14,8 +14,8 @@ const {
   GetProfileById,
   UpdateUserProfile,
   DeleteUserAccount,
-} = require('../Controllers/Authentication.js');
-const {VerifyUserUsingCookie} = require('../Middlewares/verifyUser.js');
+} = require('../Controllers/users/Authentication.js');
+const {verifyUserUsingCookie} = require('../Middlewares/verifyUser.js');
 router.use(cookieParser());
 
 //phase - 1 :
@@ -23,12 +23,12 @@ router.post('/register', upload.single('image') ,UserRegister);
 router.post('/conform', ConformUserRegister);
 router.post('/login' ,Login);
 router.post('/logout' ,LogoutUsingCookie);
-router.get('/me', VerifyUserUsingCookie ,getProfile);
+router.get('/me', verifyUserUsingCookie ,getProfile);
 router.post('/forget-password' ,forgetPassword);
-router.post('/reset-password', VerifyUserUsingCookie ,resetPassword);
-router.get('/:id', VerifyUserUsingCookie ,GetProfileById);
-router.put('/:id', VerifyUserUsingCookie ,UpdateUserProfile);
-router.delete('/:id' , VerifyUserUsingCookie ,DeleteUserAccount);
+router.post('/reset-password', verifyUserUsingCookie ,resetPassword);
+router.get('/:id', verifyUserUsingCookie ,GetProfileById);
+router.put('/:id', verifyUserUsingCookie ,UpdateUserProfile);
+router.delete('/:id' , verifyUserUsingCookie ,DeleteUserAccount);
 
 
 

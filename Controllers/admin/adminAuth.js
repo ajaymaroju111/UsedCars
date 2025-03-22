@@ -1,12 +1,12 @@
 const jwt = require("jsonwebtoken");
 const mongoose = require('mongoose')
 const dotenv = require("dotenv");
-const users = require("../Models/UserSchema.js");
-const Sessions = require("../Models/UserSession.js");
+const users = require("../../Models/UserSchema.js");
+const Sessions = require("../../Models/UserSession.js");
 dotenv.config();
-const Cars = require("../Models/CarsSchema.js");
+const Cars = require("../../Models/CarsSchema.js");
 
-const SetInactiveAccount = async (req, res) => {
+const setInactiveAccount = async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
@@ -80,7 +80,46 @@ const manageUsersPostCount = async(req , res) =>{
   }
 };
 
+const viewAllActiveAndInactiveUsers = async(req , res) =>{
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(404).json({ NoUserExist: "User not recieved" });
+    }
+    if (!(user.account_type === "admin")) {
+      return res.status(401).json({
+        message: "you are not authorized for this operation",
+      });
+    }
+    const inactiveusers = await users.find({status : 'inactive'});
+    const standard = await users.find({subscription_type : 'standard'});
+    const premium = await users.find({subscription_type : 'premium'});
+    const enterprise = await users.find({subscription_type : 'enterprise'});
+    const activeusers = await users.find({status : 'active'});
+    const inactiveCount = inactiveusers.length;
+    const activeCount = activeusers.length;
+    const standardCount = standard.length
+    const premiumCount = premium.length
+    const EnterpriseCount = enterprise.length
+    return res.status(200).json({
+      Active_Users : activeCount,
+      InActive_Users : inactiveCount,
+      Total_Users : activeCount + inactiveCount,
+      message : "Subscription Types : ",
+      standard_Users : standardCount,
+      premiumCount_Users : premiumCount,
+      Enterprise_Users : EnterpriseCount
+    })
+  } catch (error) {
+    console.log(error);
+    return json({
+      error : "internal Server Error"
+    })
+  }
+}
+
 module.exports = {
-  SetInactiveAccount,
+  setInactiveAccount,
   manageUsersPostCount,
+  viewAllActiveAndInactiveUsers
 };
