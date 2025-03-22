@@ -66,7 +66,7 @@ const manageUsersPostCount = async(req , res) =>{
       });
     }
     //Manage the posts of the specific User : 
-    user.post_limit = postLimit;
+    target.post_limit = postLimit;
     await user.save();
     console.log("Successfully set post limit");
     return res.status(200).json({
