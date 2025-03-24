@@ -94,7 +94,6 @@ const uploadNewCar = async (req, res) => {
   }
 };
 
-
 // Get the list of all cars :
 const GetAllCarsList = async (req, res) => {
   try {
@@ -133,7 +132,6 @@ const GetSpecificCarsById = async (req, res) => {
 };
 
 // Update a car by using car ID :
-
 const UpdateCarUsingID = async (req, res) => {
   try {
     const user = req.user;
