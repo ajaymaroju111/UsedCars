@@ -12,21 +12,22 @@ const {
   viewAllPostsOfaUserUsingId
 } = require('../Controllers/admin/UsersOperations.js')
 
+const {restrictAdminUsers} = require('../Middlewares/restrictAdminUsers.js');
 const {
   createCarOnAdminAccount,
     readCarDetailsUsingCarId,
     updateanyDetailsUsingCarId
 } = require('../Controllers/admin/CarsOperations.js');
 //user operation for admin  : 
-router.put('/deactivate',verifyUserUsingCookie,setInactiveAccount);
-router.put('/postlimit',verifyUserUsingCookie,manageUsersPostCount);
-router.get('/overview' , verifyUserUsingCookie, viewAllActiveAndInactiveUsers);
-router.post('/createuser' ,createUseratAdminLevel);
-router.put('/changeplan' , changeUserSubscriptionType);
-router.get('/totalposts' , viewAllPostsOfaUserUsingId);
+router.put('/deactivate',verifyUserUsingCookie,restrictAdminUsers,setInactiveAccount);
+router.put('/postlimit',verifyUserUsingCookie,restrictAdminUsers,manageUsersPostCount);
+router.get('/overview' , verifyUserUsingCookie,restrictAdminUsers, viewAllActiveAndInactiveUsers);
+router.post('/createuser',verifyUserUsingCookie,restrictAdminUsers,createUseratAdminLevel);
+router.put('/changeplan' ,verifyUserUsingCookie,restrictAdminUsers,changeUserSubscriptionType);
+router.get('/totalposts' ,verifyUserUsingCookie,restrictAdminUsers,viewAllPostsOfaUserUsingId);
 
 //car operation as a admin : 
-router.post('/createcar' ,createCarOnAdminAccount );
-router.get('/viewcar' ,  readCarDetailsUsingCarId,);
-router.put('/updatecarprice' ,updateanyDetailsUsingCarId );
+router.post('/createcar', verifyUserUsingCookie,restrictAdminUsers ,createCarOnAdminAccount );
+router.get('/viewcar', verifyUserUsingCookie,restrictAdminUsers, readCarDetailsUsingCarId,);
+router.put('/updatecarprice', verifyUserUsingCookie,restrictAdminUsers,updateanyDetailsUsingCarId );
 module.exports = router;
