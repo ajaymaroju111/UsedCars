@@ -732,6 +732,51 @@ paths:
                   CarCreationTimeError:
                     type: string
 
+  /api/cars/:
+    get:
+      summary: Display all cars
+      description: Retrieve a list of all cars from the database.
+      tags:
+        - Cars
+      responses:
+        200:
+          description: Cars fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cars:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        brand:
+                          type: string
+                          example: Toyota
+                        model:
+                          type: string
+                          example: Corolla
+                        year:
+                          type: integer
+                          example: 2020
+                        price:
+                          type: number
+                          example: 15000
+                        mileage:
+                          type: number
+                          example: 30000
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  DisplayCarsError:
+                    type: string
+                    example: Error message detailing the issue
+
   /api/cars/filter:
     get:
       summary: Search for cars
@@ -1030,7 +1075,7 @@ paths:
       tags:
         - admin
       security:
-        - ApiKeyAuth: []
+        - CookieAuth: []
       requestBody:
         required: true
         content:
@@ -1096,7 +1141,7 @@ paths:
       tags:
         - admin
       security:
-        - ApiKeyAuth: []
+        - CookieAuth: []
       requestBody:
         required: true
         content:
@@ -1169,7 +1214,7 @@ paths:
       tags:
         - admin
       security:
-        - ApiKeyAuth: []
+        - CookieAuth: []
       responses:
         '200':
           description: Successfully retrieved user counts
@@ -1218,5 +1263,503 @@ paths:
                     type: string
                     example: Internal Server Error
 
+  /api/admin/createuser:
+    post:
+      summary: Register a new user by admin
+      description: Admin can register a new user with necessary details and a profile image.
+      tags:
+        - admin
+      security:
+        - CookieAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - fullname
+                - email
+                - password
+                - phone
+                - address
+                - account_type
+                - profileImage
+              properties:
+                fullname:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: johndoe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+                phone:
+                  type: string
+                  example: "+1234567890"
+                address:
+                  type: string
+                  example: "123 Main Street, City, Country"
+                account_type:
+                  type: string
+                  enum: [admin, user]
+                  example: user
+                profileImage:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: user registration completed Successfully from the admin
+        400:
+          description: Bad Request - No file uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: No file uploaded
+        401:
+          description: Unauthorized - Not an admin or missing fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You are not authorized for this operation
+        404:
+          description: User already exists or User not received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  UserExist:
+                    type: string
+                    example: User already exists, please login
+                  NoUserExist:
+                    type: string
+                    example: User not received
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
 
+  /api/admin/changeplan:
+    put:
+      summary: Update user subscription by admin
+      description: Admin can update the subscription type of an active user.
+      tags:
+        - admin
+      security:
+        - CookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - subscription
+              properties:
+                userId:
+                  type: string
+                  example: "60a79c8b3f8e2c1d4c8b4567"
+                subscription:
+                  type: string
+                  example: "premium"
+      responses:
+        200:
+          description: User subscription updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: user subscription type changed Successfully to premium
+        400:
+          description: Bad Request - Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid input data
+        401:
+          description: Unauthorized - Not an admin or user inactive or same subscription type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You are not authorized for this operation
+        404:
+          description: User not found or user not received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User not found
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+
+  /api/admin/totalposts:
+   get:
+      summary: Get user details and posts by admin
+      description: Admin can retrieve user details and their posts using the userId from the authorization header.
+      tags:
+        - admin
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          description: UserId of the target user.
+          schema:
+            type: string
+            example: "60a79c8b3f8e2c1d4c8b4567"
+      responses:
+        200:
+          description: User details and posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userDetailsd:
+                    type: object
+                    properties:
+                      user:
+                        type: string
+                        example: John Doe
+                      number_of_posts:
+                        type: integer
+                        example: 5
+                      all_posts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            carName:
+                              type: string
+                              example: Toyota Corolla
+                            modelYear:
+                              type: integer
+                              example: 2020
+        401:
+          description: Unauthorized - Not an admin or user id not received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You are not authorized for this operation
+        404:
+          description: User not found or user not received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User not Found
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+
+  /api/admin/createcar:
+   post:
+      summary: Create a new car by admin
+      description: Admin can create a new car listing with images.
+      tags:
+        - admin
+      security:
+        - CookieAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - brand
+                - model
+                - year
+                - price
+                - mileage
+                - fuelType
+                - transmission
+                - condition
+                - location
+                - description
+                - images
+              properties:
+                brand:
+                  type: string
+                  example: Toyota
+                model:
+                  type: string
+                  example: Corolla
+                year:
+                  type: integer
+                  example: 2020
+                price:
+                  type: number
+                  example: 15000
+                mileage:
+                  type: integer
+                  example: 30000
+                fuelType:
+                  type: string
+                  example: Petrol
+                transmission:
+                  type: string
+                  example: Automatic
+                condition:
+                  type: string
+                  example: Used
+                location:
+                  type: string
+                  example: New York, NY
+                description:
+                  type: string
+                  example: Well maintained, single owner, no accidents.
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        200:
+          description: Car created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Car created Successfully
+        400:
+          description: Bad Request - Missing fields or no images uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: All fields are required!
+        401:
+          description: Unauthorized - Not an admin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You are not authorized for this operation
+        404:
+          description: User not found or not received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User not received
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+
+  /api/admin/viewcar:
+    get:
+      summary: Get car details by admin
+      description: Admin can retrieve car details using the carId from the authentication header.
+      tags:
+        - admin
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: header
+          name: Authentication
+          required: true
+          description: CarId of the target car.
+          schema:
+            type: string
+            example: "60a79c8b3f8e2c1d4c8b4567"
+      responses:
+        200:
+          description: Car details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  carDetails:
+                    type: object
+                    properties:
+                      brand:
+                        type: string
+                        example: Toyota
+                      model:
+                        type: string
+                        example: Corolla
+                      year:
+                        type: integer
+                        example: 2020
+                      price:
+                        type: number
+                        example: 15000
+        401:
+          description: Unauthorized - Not an admin or carId not received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You are not authorized for this operation
+        404:
+          description: Car not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: No Posts are found on this ID
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+
+  /api/admin/updatecarprice:
+    put:
+      summary: Update car price by admin
+      description: Admin can update the price of a specific car listing using carId.
+      tags:
+        - admin
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - carId
+                - newprice
+              properties:
+                carId:
+                  type: string
+                  example: "60a79c8b3f8e2c1d4c8b4567"
+                newprice:
+                  type: number
+                  example: 18000
+      responses:
+        200:
+          description: Car price updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Car price updated successfully to: 18000"
+        401:
+          description: Unauthorized - Not an admin or carId not received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "You are not authorized for this operation"
+        404:
+          description: Car not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No Posts are found on this ID"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal Server Error"
 
