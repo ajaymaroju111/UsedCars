@@ -10,7 +10,7 @@ const {
   createUseratAdminLevel,
   changeUserSubscriptionType,
   viewAllPostsOfaUserUsingId
-} = require('../Controllers/admin/UsersOperations.js')
+} = require('../Controllers/admin/UsersOperations.js');
 
 const {restrictAdminUsers} = require('../Middlewares/restrictAdminUsers.js');
 const {
