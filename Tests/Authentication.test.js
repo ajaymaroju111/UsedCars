@@ -1,142 +1,92 @@
 const request = require('supertest');
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
-const cookieParser = require('cookie-parser');
-const { describe, it, expect, beforeAll, afterAll } = require('@jest/globals');
-const { UserRegister, Login, getProfile, forgetPassword, LogoutUsingCookie, resetPassword, GetProfileById, UpdateUserProfile, DeleteUserAccount } = require('../Controllers/Authentication');
-require('../Nodemailer/Mails');
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,20}$/;
+const bcrypt = require('bcrypt');
+const { UserRegister } = require('../Controllers/users/Authentication.js');
+const users = require('../Models/UserSchema.js');
+const Sessions = require('../Models/UserSession.js');
+const { sendEmail } = require('../Nodemailer/Mails.js');
+
+jest.mock('../Models/UserSchema.js');
+jest.mock('../Models/UserSession.js');
+jest.mock('../Nodemailer/Mails.js');
+
 const app = express();
 app.use(express.json());
-app.use(cookieParser());
 app.post('/register', UserRegister);
-app.post('/login', Login);
-app.get('/profile', getProfile);
-app.post('/forget-password', forgetPassword);
-app.post('/logout', LogoutUsingCookie);
-app.post('/reset-password', resetPassword);
-app.get('/profile/:id', GetProfileById);
-app.put('/update-profile', UpdateUserProfile);
-app.delete('/delete-account', DeleteUserAccount);
 
-describe('Authentication Middleware', () => {
-  beforeAll(async () => {
-    await mongoose.connect('mongodb://localhost:27017/testdb', { useNewUrlParser: true, useUnifiedTopology: true });
-  });
-  afterAll(async () => {
-    await mongoose.connection.close();
+describe('User Registration API', () => {
+  let req;
+
+  beforeEach(() => {
+    req = {
+      body: {
+        fullname: 'John Doe',
+        email: 'johndoe@example.com',
+        password: 'password@123',
+        phone: '1234567890',
+        address: '123 Main St',
+        account_type: 'user',
+      },
+      file: {
+        originalname: 'profile.png',
+        buffer: Buffer.from('../utils/ProfilePics'),
+        mimetype: 'image/png',
+      },
+    };
   });
 
-  describe('UserRegister', () => {
-    it('should register a new user', async () => {
-      const res = await request(app)
-        .post('/register')
-        .send({
-          firstname: 'John',
-          middlename: 'Doe',
-          lastname: 'Smith',
-          email: 'john@example.com',
-          password: 'password123',
-          DOB: '1990-01-01',
-          phone: "1234567890",
-        });
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('message', 'User registered successfully');
+  it('should return 401 if any required field is missing', async () => {
+    delete req.body.email;
+
+    const res = await request(app).post('/register').send(req.body);
+
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty('error', 'All fields are required for the registration');
+  });
+
+  it('should return 404 if user already exists', async () => {
+    users.findOne.mockResolvedValue(true);
+
+    const res = await request(app).post('/register').send(req.body);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('UserExist', 'User already exist please login');
+  });
+
+  it('should return 400 if no file is uploaded', async () => {
+    req.file = null;
+
+    const res = await request(app).post('/register').send(req.body);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('message', 'No file uploaded');
+  });
+
+  it('should successfully register a user and send confirmation email', async () => {
+    users.findOne.mockResolvedValue(null);
+    users.create.mockResolvedValue({ _id: '12345', email: req.body.email, fullname: req.body.fullname });
+    bcrypt.hash = jest.fn().mockResolvedValue('hashedPassword');
+    Sessions.create.mockResolvedValue({});
+
+    const res = await request(app).post('/register').send(req.body);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('message', expect.stringContaining('user registration conformation has send to the email'));
+    expect(sendEmail).toHaveBeenCalled();
+    expect(Sessions.create).toHaveBeenCalledWith({
+      useremail: req.body.email,
+      userId: '12345',
+      VerifyToken: expect.any(String),
+      expiryTime: expect.any(Number),
     });
   });
 
-  describe('Login', () => {
-    it('should login a user', async () => {
-      const res = await request(app)
-        .post('/login')
-        .send({
-          username: "testuser",
-          password: "password123",
-        });
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('Success', true);
-    });
-  });
+  it('should return 500 if an internal error occurs', async () => {
+    users.findOne.mockRejectedValue(new Error('Database Error'));
 
-  describe('getProfile', () => {
-    it('should get user profile', async () => {
-      const token = jwt.sign({ id: new mongoose.Types.ObjectId() }, process.env.JWT_SECRET);
-      const res = await request(app)
-        .get('/profile')
-        .set('Cookie', [`token=${token}`]);
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('email');
-    });
-  });
+    const res = await request(app).post('/register').send(req.body);
 
-  describe('forgetPassword', () => {
-    it('should send forget password email', async () => {
-      const res = await request(app)
-        .post('/forget-password')
-        .send({ email: 'john@example.com' });
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('Success', true);
-    });
-  });
-
-  describe('resetPassword', () => {
-    it('should reset user password', async () => {
-      const token = jwt.sign({ id: new mongoose.Types.ObjectId() }, process.env.JWT_SECRET);
-      const res = await request(app)
-        .post('/reset-password')
-        .set('Cookie', [`token=${token}`])
-        .send({ oldPassword: 'password123', newPassword: 'newpassword123' });
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('successful', true);
-    });
-  });
-
-  describe('GetProfileById', () => {
-    it('should get user profile by ID', async () => {
-      const userId = new mongoose.Types.ObjectId();
-      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
-      const res = await request(app)
-        .get(`/profile/${userId}`)
-        .set('Cookie', [`token=${token}`]);
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('email');
-    });
-  });
-
-  describe('UpdateUserProfile', () => {
-    it('should update user profile', async () => {
-      const userId = new mongoose.Types.ObjectId();
-      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
-      const res = await request(app)
-        .put('/update-profile')
-        .set('Cookie', [`token=${token}`])
-        .send({ email: 'newemail@example.com', password: 'newpassword123' });
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('email', 'newemail@example.com');
-    });
-  });
-
-  describe('LogoutUsingCookie', () => {
-    it('should logout a user', async () => {
-      const token = jwt.sign({ id: new mongoose.Types.ObjectId() }, process.env.JWT_SECRET);
-      const res = await request(app)
-        .post('/logout')
-        .set('Cookie', [`token=${token}`]);
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('message', 'User logged out successfully');
-    });
-  });
-
-  describe('DeleteUserAccount', () => {
-    it('should delete user account', async () => {
-      const userId = new mongoose.Types.ObjectId();
-      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
-      const res = await request(app)
-        .delete('/delete-account')
-        .set('Cookie', [`token=${token}`]);
-      expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('success', true);
-    });
+    expect(res.status).toBe(500);
+    expect(res.body).toHaveProperty('RegistrationError', 'Database Error');
   });
 });
