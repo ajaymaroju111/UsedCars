@@ -143,10 +143,6 @@ paths:
             schema:
               type: object
               properties:
-                email:
-                  type: string
-                  description: Email address of the user
-                  example: marojuajay111@gmail.com
                 Registertoken:
                   type: string
                   description: Registration token sent to the user's email
@@ -1447,9 +1443,10 @@ paths:
         - admin
       security:
         - CookieAuth: []
+        - ApiKeyAuth : []
       parameters:
         - in: header
-          name: Authorization
+          name: authentication
           required: true
           description: UserId of the target user.
           schema:

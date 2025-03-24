@@ -8,7 +8,7 @@ const restrictAdminUsers = async(req , res , next) =>{
      const response = {
       users: users.map(user => `Hello, ${user.fullname}! you are not authorized for this only two accounts should have admin access`),
     };
-    next(req.user);
+    next();
     return res.status(200).json(response);
   } catch (error) {
     console.log(error);

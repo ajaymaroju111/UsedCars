@@ -83,21 +83,15 @@ const UserRegister = async (req, res) => {
 // user registration conformation :
 const ConformUserRegister = async (req, res) => {
   try {
-    const { email, Registertoken } = req.body;
-    if (!email || !Registertoken) {
-      return res.status(401).json({
-        error: "All fields are required please enter",
-      });
-    }
-    //check for the user exist or not :
-    const user = await users.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
+    
+    const { Registertoken } = req.body;
+    //decode the email using Buffer:
+    const decodedEmail = Buffer.from(Registertoken, "base64").toString(
+      "utf8"
+    );
+    console.log(decodedEmail);
     //check weather the users sessions exist or not :
-    const session = await Sessions.findOne({ useremail: email });
+    const session = await Sessions.findOne({ useremail: decodedEmail });
     if (!session) {
       return res.status(404).json({
         message: "session not found",
@@ -105,34 +99,31 @@ const ConformUserRegister = async (req, res) => {
     }
     //check weather the time expired or not :
     if (Date.now() > session.expiryTime) {
-      await users.deleteOne({ email });
-      await Sessions.deleteOne({ email });
+      await users.deleteOne({ email : decodedEmail });
+      await Sessions.deleteOne({ useremail: decodedEmail });
       console.log("all data deleted");
       return res.status(401).json({
         message: "Time expired!!.. please register again",
       });
     }
-    const decodedEmail = Buffer.from(session.VerifyToken, "base64").toString(
-      "utf8"
-    );
-    //decode the email using Buffer:
-    const isTokenValid = decodedEmail === Registertoken;
-    const validId = session.userId == user._id;
-    if (!isTokenValid) {
+    console.log(decodedEmail);
+    if ( !Registertoken) {
       return res.status(401).json({
-        message: "token register authentication failed",
+        error: "All fields are required please enter",
       });
     }
+    //check for the user exist or not :
+    const user = await users.findOne({ email : decodedEmail });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    
+    const validId = (session.userId == user._id);
     if (!validId) {
       return res.status(401).json({
         message: "user register authentication failed",
-      });
-    }
-    //free up the space in sessions :
-    const cleared = await Sessions.deleteMany({ email });
-    if (!cleared) {
-      return res.status(401).json({
-        message: "sessions data doesnot deleted",
       });
     }
     user.status = "active";

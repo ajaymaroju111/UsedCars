@@ -246,6 +246,7 @@ const changeUserSubscriptionType = async (req, res) => {
 const viewAllPostsOfaUserUsingId = async (req, res) => {
   try {
     const user = req.user;
+    const userId = req.headers["authentication"];
     if (!user) {
       return res.status(404).json({ NoUserExist: "User not recieved" });
     }
@@ -254,7 +255,7 @@ const viewAllPostsOfaUserUsingId = async (req, res) => {
         message: "you are not authorized for this operation",
       });
     }
-    const userId = req.headers["authorization"];
+    console.log(userId);
     if (!userId) {
       console.log("user id not Recived");
       return res.status(401).json({
