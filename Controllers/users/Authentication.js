@@ -10,7 +10,8 @@ const {
   AccountConformationafterRegister,
 } = require("../../Nodemailer/MailTemplates/Templates.js");
 
-// User Registration :
+
+// User Registration : 
 const UserRegister = async (req, res) => {
   try {
     const { fullname, email, password, phone, address, account_type } =
@@ -80,7 +81,7 @@ const UserRegister = async (req, res) => {
   }
 };
 
-// user registration conformation :
+// user registration conformation : 
 const ConformUserRegister = async (req, res) => {
   try {
     
@@ -142,7 +143,7 @@ const ConformUserRegister = async (req, res) => {
   }
 };
 
-//user login using  email and  password
+//user login using  email and  password : 
 const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -200,7 +201,7 @@ const Login = async (req, res) => {
   }
 };
 
-//user logout:
+//user logout : 
 const LogoutUsingCookie = async (req, res) => {
   try {
     const { token } = req.cookies;
@@ -220,7 +221,7 @@ const LogoutUsingCookie = async (req, res) => {
   }
 };
 
-//get user profile by user ID and only when the user is active :
+//get user profile by user ID and only when the user is active : 
 const getProfile = async (req, res) => {
   try {
     const user = req.user;
@@ -236,7 +237,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-//sending forget password link to the user email
+//sending forget password link to the user email : 
 const forgetPassword = async (req, res) => {
   try {
     const {email} = req.body;
@@ -262,7 +263,7 @@ const forgetPassword = async (req, res) => {
   }
 };
 
-//user reset password :  No Authentication required
+//user reset password :  No Authentication required : 
 const resetPassword = async (req, res) => {
   try {
     const user = req.user;
@@ -293,7 +294,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-//get user profile by id within in the session expire time :
+//get user profile by id within in the session expire time : 
 const GetProfileById = async (req, res) => {
   try {
     const user = req.user;
@@ -306,7 +307,7 @@ const GetProfileById = async (req, res) => {
   }
 };
 
-//update user profile based on cookie :
+//update user profile based on cookie : 
 const UpdateUserProfile = async (req, res) => {
   try {
     const user = req.user;
@@ -330,7 +331,7 @@ const UpdateUserProfile = async (req, res) => {
   }
 };
 
-//Delete user account based on the cookie :
+//Delete user account based on the cookie : 
 const DeleteUserAccount = async (req, res) => {
   try {
     const user = req.user;
