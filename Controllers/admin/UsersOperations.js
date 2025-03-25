@@ -1,9 +1,8 @@
 const users = require("../../Models/UserSchema.js");
-const Sessions = require("../../Models/UserSession.js");
 const cars = require("../../Models/CarsSchema.js");
 const bcrypt = require("bcrypt");
-const dotenv = require("dotenv");
-dotenv.config();
+const dotenv = require("dotenv").config();
+
 
 const setInactiveAccount = async (req, res) => {
   try {
@@ -173,11 +172,6 @@ const createUseratAdminLevel = async (req, res) => {
       status: "active",
     });
     await newUser.save();
-    const session = await Sessions.create({
-      useremail: user.email,
-      userId: user._id,
-    });
-    await session.save();
     return res.status(200).json({
       message: "user registration completed Successfully from the admin",
     });

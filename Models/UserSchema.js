@@ -62,6 +62,12 @@ const userData = new mongoose.Schema(
       type : String,
       enum : ['standard', 'premium', 'enterprise'],
       default : 'standard'
+    },
+    VerifyToken : {
+      type : String,
+    },
+    expiryTime : {
+      type : Date
     }
   },
   { timestamps: true }

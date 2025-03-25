@@ -1,7 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const users = require("../../Models/UserSchema.js");
-const Sessions = require("../../Models/UserSession.js");
 const Cars = require("../../Models/CarsSchema.js");
 const { sendEmail } = require("../../Nodemailer/Mails.js");
 const { CreateToken } = require("../../Middlewares/verifyUser.js");
@@ -10,8 +9,7 @@ const {
   AccountConformationafterRegister,
 } = require("../../Nodemailer/MailTemplates/Templates.js");
 
-
-// User Registration : 
+// User Registration :
 const UserRegister = async (req, res) => {
   try {
     const { fullname, email, password, phone, address, account_type } =
@@ -63,14 +61,10 @@ const UserRegister = async (req, res) => {
       subject: "Account Conformation for UsedCars Platform",
       text: AccountConformationafterRegister(user.fullname, encodedEmail),
     });
-    //create and store token in Sessions collection :
-    const session = await Sessions.create({
-      useremail: user.email,
-      userId: user._id,
-      VerifyToken: encodedEmail,
-      expiryTime: Date.now() + 10 * 60 * 1000,
-    });
-    await session.save();
+    //create and store token in users collection :
+    user.VerifyToken = encodedEmail;
+    user.expiryTime = Date.now() + 10 * 60 * 1000;
+    await user.save();
     return res.status(200).json({
       message:
         "user registration conformation has send to the email !!  Please Verify",
@@ -81,57 +75,37 @@ const UserRegister = async (req, res) => {
   }
 };
 
-// user registration conformation : 
+// user registration conformation :
 const ConformUserRegister = async (req, res) => {
   try {
-    
     const { Registertoken } = req.body;
+    if (!Registertoken) {
+      console.log("register token is not received");
+      return res.status(400).json({
+        message: "Access token is not received",
+      });
+    }
     //decode the email using Buffer:
-    const decodedEmail = Buffer.from(Registertoken, "base64").toString(
-      "utf8"
-    );
-    console.log(decodedEmail);
-    //check weather the users sessions exist or not :
-    const session = await Sessions.findOne({ useremail: decodedEmail });
-    if (!session) {
-      return res.status(404).json({
-        message: "session not found",
-      });
-    }
-    //check weather the time expired or not :
-    if (Date.now() > session.expiryTime) {
-      await users.deleteOne({ email : decodedEmail });
-      await Sessions.deleteOne({ useremail: decodedEmail });
-      console.log("all data deleted");
-      return res.status(401).json({
-        message: "Time expired!!.. please register again",
-      });
-    }
-    console.log(decodedEmail);
-    if ( !Registertoken) {
-      return res.status(401).json({
-        error: "All fields are required please enter",
-      });
-    }
-    //check for the user exist or not :
-    const user = await users.findOne({ email : decodedEmail });
+    const decodedEmail = Buffer.from(Registertoken, "base64").toString("utf8");
+    //check weather the users  exist or not :
+    const user = await users.findOne({ email: decodedEmail });
     if (!user) {
       return res.status(404).json({
         message: "User not found",
       });
     }
-    
-    const validId = (session.userId == user._id);
-    if (!validId) {
+    //check weather the time expired or not :
+    if (Date.now() > user.expiryTime) {
+      await users.deleteOne({ email: decodedEmail });
+      console.log("data deleted");
       return res.status(401).json({
-        message: "user register authentication failed",
+        message: "Time expired!!.. please register again",
       });
     }
-    user.status = "active";
+    user.status = 'active';
+    user.VerifyToken = undefined;
+    user.expiryTime = undefined;
     await user.save();
-    session.VerifyToken = undefined;
-    session.expiryTime = undefined;
-    await session.save();
     return res.status(200).json({
       message: "user verified Succesfully",
     });
@@ -143,7 +117,7 @@ const ConformUserRegister = async (req, res) => {
   }
 };
 
-//user login using  email and  password : 
+//user login using  email and  password :
 const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -201,7 +175,7 @@ const Login = async (req, res) => {
   }
 };
 
-//user logout : 
+//user logout :
 const LogoutUsingCookie = async (req, res) => {
   try {
     const { token } = req.cookies;
@@ -221,7 +195,7 @@ const LogoutUsingCookie = async (req, res) => {
   }
 };
 
-//get user profile by user ID and only when the user is active : 
+//get user profile by user ID and only when the user is active :
 const getProfile = async (req, res) => {
   try {
     const user = req.user;
@@ -237,17 +211,17 @@ const getProfile = async (req, res) => {
   }
 };
 
-//sending forget password link to the user email : 
+//sending forget password link to the user email :
 const forgetPassword = async (req, res) => {
   try {
-    const {email} = req.body;
+    const { email } = req.body;
     if (!email) {
       return res.status(404).json({ NoUserExist: "please Enter the Email" });
     }
     const user = await users.findOne({ email });
-    if(!user){
+    if (!user) {
       return res.status(400).json({
-        message  : "User doesnot Exist !!..   please Register"
+        message: "User doesnot Exist !!..   please Register",
       });
     }
     await sendEmail({
@@ -263,7 +237,7 @@ const forgetPassword = async (req, res) => {
   }
 };
 
-//user reset password :  No Authentication required : 
+//user reset password :  No Authentication required :
 const resetPassword = async (req, res) => {
   try {
     const user = req.user;
@@ -294,7 +268,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-//get user profile by id within in the session expire time : 
+//get user profile by id within in the session expire time :
 const GetProfileById = async (req, res) => {
   try {
     const user = req.user;
@@ -307,7 +281,7 @@ const GetProfileById = async (req, res) => {
   }
 };
 
-//update user profile based on cookie : 
+//update user profile based on cookie :
 const UpdateUserProfile = async (req, res) => {
   try {
     const user = req.user;
@@ -331,7 +305,7 @@ const UpdateUserProfile = async (req, res) => {
   }
 };
 
-//Delete user account based on the cookie : 
+//Delete user account based on the cookie :
 const DeleteUserAccount = async (req, res) => {
   try {
     const user = req.user;
@@ -344,12 +318,6 @@ const DeleteUserAccount = async (req, res) => {
       return res
         .status(404)
         .json({ message: "error occured in deleting the account" });
-    }
-    const clearSessions = await Sessions.findByIdAndDelete(id);
-    if (!clearSessions) {
-      return res.status(401).json({
-        message: "error occured in clear session operation",
-      });
     }
     const isPostDeleted = await Cars.deleteMany({ owner_id: id });
     if (!isPostDeleted) {
