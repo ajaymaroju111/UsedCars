@@ -3,7 +3,7 @@ const cars = require("../../Models/CarsSchema.js");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv").config();
 
-
+//Deactivate user 
 const setInactiveAccount = async (req, res) => {
   try {
     const user = req.user;
@@ -40,6 +40,7 @@ const setInactiveAccount = async (req, res) => {
   }
 };
 
+//manage post limit for the user : 
 const manageUsersPostCount = async(req , res) =>{
   try {
     const user = req.user;
@@ -78,6 +79,7 @@ const manageUsersPostCount = async(req , res) =>{
   }
 };
 
+//view all active and inactive users : 
 const viewAllActiveAndInactiveUsers = async(req , res) =>{
   try {
     const user = req.user;
