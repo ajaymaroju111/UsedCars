@@ -22,7 +22,6 @@ const {
 router.put('/deactivate',verifyUserUsingCookie,setInactiveAccount);
 router.put('/postlimit',verifyUserUsingCookie,manageUsersPostCount);
 router.get('/overview' , verifyUserUsingCookie, viewAllActiveAndInactiveUsers);
-router.post('/createuser',verifyUserUsingCookie,createUseratAdminLevel);
 router.put('/changeplan' ,verifyUserUsingCookie,changeUserSubscriptionType);
 router.get('/totalposts' ,verifyUserUsingCookie,viewAllPostsOfaUserUsingId);
 

@@ -118,73 +118,6 @@ const viewAllActiveAndInactiveUsers = async(req , res) =>{
   }
 };
 
-//create a new user from admin Side :
-const createUseratAdminLevel = async (req, res) => {
-  try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
-    }
-    if (!(user.account_type === "admin")) {
-      return res.status(401).json({
-        message: "you are not authorized for this operation",
-      });
-    }
-    const { fullname, email, password, phone, address, account_type } =
-      req.body;
-    if (
-      !fullname ||
-      !email ||
-      !password ||
-      !phone ||
-      !address ||
-      !account_type
-    ) {
-      return res
-        .status(401)
-        .json({ error: "All fields are required for the registration" });
-    }
-    //Search for the user in the DB :
-    const isUser = await users.findOne({ email });
-    if (isUser) {
-      return res
-        .status(404)
-        .json({ UserExist: "User already exist please login" });
-    }
-    const SaltRounds = await bcrypt.genSalt(10);
-    const HashedPassword = await bcrypt.hash(password, SaltRounds);
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-    const newUser = await users.create({
-      profileImage: {
-        name: req.file.originalname,
-        img: {
-          data: req.file.buffer, // Store buffer data
-          contentType: req.file.mimetype,
-        },
-      },
-      fullname,
-      email,
-      password: HashedPassword,
-      phone,
-      phone,
-      address,
-      account_type,
-      status: "active",
-    });
-    await newUser.save();
-    return res.status(200).json({
-      message: "user registration completed Successfully from the admin",
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      error: "Internal Server Error",
-    });
-  }
-};
-
 //update Subscription type and
 const changeUserSubscriptionType = async (req, res) => {
   try {
@@ -291,7 +224,6 @@ module.exports = {
   setInactiveAccount,
   manageUsersPostCount,
   viewAllActiveAndInactiveUsers,
-  createUseratAdminLevel,
   changeUserSubscriptionType,
   viewAllPostsOfaUserUsingId,
 };
