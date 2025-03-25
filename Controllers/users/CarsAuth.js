@@ -97,7 +97,7 @@ const uploadNewCar = async (req, res) => {
 // Get the list of all cars :
 const GetAllCarsList = async (req, res) => {
   try {
-    const cars = await Cars.find();
+    const cars = await Cars.find({});
     return res.status(200).json({ cars });
   } catch (error) {
     console.log(error);
@@ -236,6 +236,6 @@ module.exports = {
   GetAllCarsList,
   GetSpecificCarsById,
   UpdateCarUsingID,
-  RemoveCarUsingID,
+  RemoveCarUsingID,  
   SearchCarUsingDetails,
 };
