@@ -25,14 +25,14 @@ const UserRegister = async (req, res) => {
       !account_type
     ) {
       return res
-        .status(401)
+        .status(400)
         .json({ error: "All fields are required for the registration" });
     }
     //Search for the user in the DB :
     const isUser = await users.findOne({ email });
     if (isUser) {
       return res
-        .status(404)
+        .status(409)
         .json({ UserExist: "User already exist please login" });
     }
     const SaltRounds = await bcrypt.genSalt(10);
