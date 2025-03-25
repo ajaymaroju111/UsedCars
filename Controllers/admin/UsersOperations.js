@@ -3,7 +3,7 @@ const cars = require("../../Models/CarsSchema.js");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv").config();
 
-//Deactivate user 
+//Deactivate user
 const setInactiveAccount = async (req, res) => {
   try {
     const user = req.user;

@@ -268,7 +268,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-//get user profile by id within in the session expire time :
+//get user profile by id within in the user expire time :
 const GetProfileById = async (req, res) => {
   try {
     const user = req.user;
