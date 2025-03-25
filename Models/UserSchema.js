@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { Buffer } = require("buffer");
-const { type } = require("os");
 
 const userData = new mongoose.Schema(
   {

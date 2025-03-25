@@ -4,8 +4,6 @@ require("dotenv").config(); // Load environment variables
 const connectDB = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI,{
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             maxPoolSize: 10, // Number of connections in the pool
             serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
           });

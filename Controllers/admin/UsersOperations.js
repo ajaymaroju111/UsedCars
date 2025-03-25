@@ -115,7 +115,7 @@ const viewAllActiveAndInactiveUsers = async(req , res) =>{
       error : "internal Server Error"
     })
   }
-}
+};
 
 //create a new user from admin Side :
 const createUseratAdminLevel = async (req, res) => {
