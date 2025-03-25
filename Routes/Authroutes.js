@@ -19,16 +19,14 @@ const {verifyUserUsingCookie} = require('../Middlewares/verifyUser.js');
 router.use(cookieParser());
 
 //phase - 1 :
-router.post('/register', upload.single('image') ,UserRegister);
-router.post('/conform', ConformUserRegister);
-router.post('/login' ,Login);
-router.post('/logout' ,LogoutUsingCookie);
-router.get('/me', verifyUserUsingCookie ,getProfile);
-router.post('/forget-password' ,forgetPassword);
-router.post('/reset-password', verifyUserUsingCookie ,resetPassword);
-router.get('/:id', verifyUserUsingCookie ,GetProfileById);
-router.put('/:id', verifyUserUsingCookie ,UpdateUserProfile);
-router.delete('/:id' , verifyUserUsingCookie ,DeleteUserAccount);
+router.route('/register').post( upload.single('image') ,UserRegister);
+router.route('/conform').post(ConformUserRegister);
+router.route('/login').post(Login);
+router.route('/logout').post(LogoutUsingCookie);
+router.route('/me').get(verifyUserUsingCookie ,getProfile);
+router.route('/forget-password').post(forgetPassword);
+router.route('/reset-password').post(verifyUserUsingCookie ,resetPassword);
+router.route('/:id').get(verifyUserUsingCookie ,GetProfileById).put(verifyUserUsingCookie ,UpdateUserProfile).delete(verifyUserUsingCookie ,DeleteUserAccount);
 
 
 

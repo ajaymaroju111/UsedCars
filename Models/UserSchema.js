@@ -10,11 +10,12 @@ const userData = new mongoose.Schema(
         contentType: String, // Image type (jpeg/png)
       },
     },
-    fullname: {
+    username: {
       type: String,
       required: true,
       trim: true,
       maxlength: 50,
+      unique : true,
     },
     email: {
       type: String,
@@ -62,9 +63,6 @@ const userData = new mongoose.Schema(
       type : String,
       enum : ['standard', 'premium', 'enterprise'],
       default : 'standard'
-    },
-    VerifyToken : {
-      type : String,
     },
     expiryTime : {
       type : Date

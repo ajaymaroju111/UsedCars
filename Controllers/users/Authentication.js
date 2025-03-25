@@ -4,6 +4,7 @@ const users = require("../../Models/UserSchema.js");
 const Cars = require("../../Models/CarsSchema.js");
 const { sendEmail } = require("../../Nodemailer/Mails.js");
 const catchAsync = require("../../Middlewares/catchAsync.js");
+const ErrorHandler = require('../../utils/ErrorHandler.js')
 const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
@@ -12,10 +13,10 @@ const {
 // User Registration :
 exports.UserRegister = catchAsync(async (req, res, next) => {
   try {
-    const { fullname, email, password, phone, address, account_type } =
+    const { username, email, password, phone, address, account_type } =
       req.body;
     if (
-      !fullname ||
+      !username ||
       !email ||
       !password ||
       !phone ||
@@ -27,11 +28,14 @@ exports.UserRegister = catchAsync(async (req, res, next) => {
         .json({ error: "All fields are required for the registration" });
     }
     //Search for the user in the DB :
-    const isUser = await users.findOne({ email });
+    const isUser = await users.findOne({ 
+      $or:[{email} , {username}]
+    });
     if (isUser) {
-      return res
-        .status(409)
-        .json({ UserExist: "User already exist please login" });
+      if(user.username === username){
+        return next(new ErrorHandler("Username already taken , try another username ", 401));
+      }
+      return next(new ErrorHandler("Email already exists", 401));
     }
     const SaltRounds = await bcrypt.genSalt(10);
     const HashedPassword = await bcrypt.hash(password, SaltRounds);
@@ -46,7 +50,7 @@ exports.UserRegister = catchAsync(async (req, res, next) => {
           contentType: req.file.mimetype,
         },
       },
-      fullname,
+      username,
       email,
       password: HashedPassword,
       phone,
@@ -55,14 +59,13 @@ exports.UserRegister = catchAsync(async (req, res, next) => {
       account_type,
     });
     await user.save();
-    const encodedEmail = Buffer.from(email).toString("base64");
+    const combinedString = `${email}:${username}`;
+    const encodedEmail = Buffer.from(combinedString,'utf-8');
     await sendEmail({
       to: user.email,
       subject: "Account Conformation for UsedCars Platform",
-      text: AccountConformationafterRegister(user.fullname, encodedEmail),
+      text: AccountConformationafterRegister(user.username, encodedEmail),
     });
-    //create and store token in users collection :
-    user.VerifyToken = encodedEmail;
     user.expiryTime = Date.now() + 10 * 60 * 1000;
     await user.save();
     return res.status(200).json({
@@ -86,7 +89,7 @@ exports.ConformUserRegister = catchAsync(async (req, res, next) => {
       });
     }
     //decode the email using Buffer:
-    const decodedEmail = Buffer.from(Registertoken, "base64").toString("utf8");
+    const decodedEmail = R.from(Registertoken, "base64").toString("utf8");
     //check weather the users  exist or not :
     const user = await users.findOne({ email: decodedEmail });
     if (!user) {

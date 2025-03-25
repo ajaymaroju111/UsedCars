@@ -20,14 +20,14 @@ const {
 } = require('../Controllers/admin/CarsOperations.js');
 
 //user operation for admin  : 
-router.put('/deactivate',verifyUserUsingCookie,setInactiveAccount);
-router.put('/postlimit',verifyUserUsingCookie,manageUsersPostCount);
-router.get('/overview' , verifyUserUsingCookie, viewAllActiveAndInactiveUsers);
-router.put('/changeplan' ,verifyUserUsingCookie,changeUserSubscriptionType);
-router.get('/totalposts' ,verifyUserUsingCookie,viewAllPostsOfaUserUsingId);
+router.route('/deactivate').get(verifyUserUsingCookie,setInactiveAccount);
+router.route('/postlimit').put(verifyUserUsingCookie,manageUsersPostCount);
+router.route('/overview' ).get(verifyUserUsingCookie, viewAllActiveAndInactiveUsers);
+router.route('/changeplan').put(verifyUserUsingCookie,changeUserSubscriptionType);
+router.route('/totalposts').get(verifyUserUsingCookie,viewAllPostsOfaUserUsingId);
 
 //car operation as a admin : 
-router.post('/createcar', verifyUserUsingCookie ,createCarOnAdminAccount );
-router.get('/viewcar', verifyUserUsingCookie, readCarDetailsUsingCarId,);
-router.put('/updatecarprice', verifyUserUsingCookie,updateanyDetailsUsingCarId);
+router.route('/createcar').post(verifyUserUsingCookie ,createCarOnAdminAccount );
+router.route('/viewcar').get(verifyUserUsingCookie, readCarDetailsUsingCarId,);
+router.route('/updatecarprice').put(verifyUserUsingCookie,updateanyDetailsUsingCarId);
 module.exports = router;
