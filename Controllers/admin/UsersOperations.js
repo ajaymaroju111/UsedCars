@@ -1,10 +1,10 @@
 const users = require("../../Models/UserSchema.js");
 const cars = require("../../Models/CarsSchema.js");
-const bcrypt = require("bcrypt");
+const catchAsync = require('../../Middlewares/catchAsync.js');
 const dotenv = require("dotenv").config();
 
 //Deactivate user
-const setInactiveAccount = async (req, res) => {
+exports.setInactiveAccount = catchAsync ( async (req, res , next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -38,10 +38,10 @@ const setInactiveAccount = async (req, res) => {
       error: "Internal server error." 
     });
   }
-};
+});
 
 //manage post limit for the user : 
-const manageUsersPostCount = async(req , res) =>{
+exports.manageUsersPostCount = catchAsync ( async(req , res , next) =>{
   try {
     const user = req.user;
     if (!user) {
@@ -77,10 +77,10 @@ const manageUsersPostCount = async(req , res) =>{
       error : "Internal Server Error"
     })
   }
-};
+});
 
 //view all active and inactive users : 
-const viewAllActiveAndInactiveUsers = async(req , res) =>{
+exports.viewAllActiveAndInactiveUsers = catchAsync ( async(req , res , next) =>{
   try {
     const user = req.user;
     if (!user) {
@@ -116,10 +116,10 @@ const viewAllActiveAndInactiveUsers = async(req , res) =>{
       error : "internal Server Error"
     })
   }
-};
+});
 
 //update Subscription type and
-const changeUserSubscriptionType = async (req, res) => {
+exports.changeUserSubscriptionType = catchAsync( async (req, res , next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -169,10 +169,10 @@ const changeUserSubscriptionType = async (req, res) => {
       error: "Internal Server Error",
     });
   }
-};
+});
 
 //Read the user Details based on their ID :
-const viewAllPostsOfaUserUsingId = async (req, res) => {
+exports.viewAllPostsOfaUserUsingId = catchAsync( async (req, res , next) => {
   try {
     const user = req.user;
     const userId = req.headers["authentication"];
@@ -218,12 +218,5 @@ const viewAllPostsOfaUserUsingId = async (req, res) => {
       error: "Internal Server Error",
     });
   }
-};
+});
 
-module.exports = {
-  setInactiveAccount,
-  manageUsersPostCount,
-  viewAllActiveAndInactiveUsers,
-  changeUserSubscriptionType,
-  viewAllPostsOfaUserUsingId,
-};

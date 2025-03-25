@@ -19,7 +19,7 @@ let transporter = nodemailer.createTransport({
 });
 
 //Sending Registration OTP for the user : 
-const sendEmail = async (options) => {
+exports.sendEmail = async (options) => {
   // Email options
   const mailOptions = {
       from: `"usedcars@support.com" <${process.env.EMAIL_FROM}>`,   // Sender email (your Hostinger email)
@@ -45,6 +45,3 @@ const sendEmail = async (options) => {
       console.error("Error sending email: ", error);
   }
 };
-
-
-module.exports = {sendEmail}

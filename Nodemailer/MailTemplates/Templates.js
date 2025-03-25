@@ -1,7 +1,7 @@
 //this templates should not be async (promise returned function )
 
 //Template for the forget password : 
-const forgetPasswordTemplate = (username) =>{
+exports.forgetPasswordTemplate = (username) =>{
   return `
  <!DOCTYPE html>
 <html lang="en">
@@ -74,7 +74,7 @@ const forgetPasswordTemplate = (username) =>{
 } 
 
 //verification button after registration : 
-const AccountConformationafterRegister = (Fullname , token) =>{
+exports.AccountConformationafterRegister = (Fullname , token) =>{
   return `
   <!DOCTYPE html>
 <html>
@@ -145,7 +145,7 @@ const AccountConformationafterRegister = (Fullname , token) =>{
   `
 }
 
-const AfterConformRegisterEmail = (username) =>{
+exports.AfterConformRegisterEmail = (username) =>{
     return `
     <!DOCTYPE html>
 <html lang="en">
@@ -211,4 +211,3 @@ const AfterConformRegisterEmail = (username) =>{
 
     `
 }
-module.exports = {forgetPasswordTemplate, AccountConformationafterRegister, AfterConformRegisterEmail};

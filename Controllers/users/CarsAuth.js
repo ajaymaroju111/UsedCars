@@ -1,12 +1,13 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const catchAsync = require("../../Middlewares/catchAsync.js");
 const users = require("../../Models/UserSchema.js");
 dotenv.config();
 const Cars = require("../../Models/CarsSchema.js");
 
 // Create a new car listing :
-const uploadNewCar = async (req, res) => {
+exports.uploadNewCar = catchAsync(async (req, res, next) => {
   const user = req.user;
   if (!user) {
     return res.status(404).json({ NoUserExist: "User not received" });
@@ -55,7 +56,7 @@ const uploadNewCar = async (req, res) => {
     }
     console.log(req.files);
     // Prepare images for storage
-    const carImages = req.files.map(file => ({
+    const carImages = req.files.map((file) => ({
       name: file.originalname,
       img: {
         data: file.buffer, // Store buffer data
@@ -74,7 +75,7 @@ const uploadNewCar = async (req, res) => {
       transmission,
       condition,
       location,
-      carImages : carImages, // Use the prepared images array
+      carImages: carImages, // Use the prepared images array
       description,
       owner_id: user._id,
     });
@@ -92,10 +93,10 @@ const uploadNewCar = async (req, res) => {
     console.log(error);
     return res.status(500).json({ CarCreationTimeError: error.message });
   }
-};
+});
 
 // Get the list of all cars :
-const GetAllCarsList = async (req, res) => {
+exports.GetAllCarsList = catchAsync(async (req, res, next) => {
   try {
     const cars = await Cars.find({});
     return res.status(200).json({ cars });
@@ -103,10 +104,10 @@ const GetAllCarsList = async (req, res) => {
     console.log(error);
     return res.status(500).json({ DisplayCarsError: error.message });
   }
-};
+});
 
 // Get a specific car details based on ID :
-const GetSpecificCarsById = async (req, res) => {
+exports.GetSpecificCarsById = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -129,10 +130,10 @@ const GetSpecificCarsById = async (req, res) => {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
   }
-};
+});
 
 // Update a car by using car ID :
-const UpdateCarUsingID = async (req, res) => {
+exports.UpdateCarUsingID = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -165,10 +166,10 @@ const UpdateCarUsingID = async (req, res) => {
     console.log(error);
     res.status(500).json({ error: error.message });
   }
-};
+});
 
 // Remove a car from the listing :
-const RemoveCarUsingID = async (req, res) => {
+exports.RemoveCarUsingID = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -198,10 +199,10 @@ const RemoveCarUsingID = async (req, res) => {
     console.log(error);
     return res.status(500).json({ error: error.message });
   }
-};
+});
 
 // Search car based on the brand, model, price, location :
-const SearchCarUsingDetails = async (req, res) => {
+exports.SearchCarUsingDetails = catchAsync(async (req, res, next) => {
   const { brand, model, price, location } = req.headers;
   console.log(brand, model, price, location);
   try {
@@ -229,13 +230,4 @@ const SearchCarUsingDetails = async (req, res) => {
     console.log(error);
     res.status(500).json({ filterError: "Internal Server Error" });
   }
-};
-
-module.exports = {
-  uploadNewCar,
-  GetAllCarsList,
-  GetSpecificCarsById,
-  UpdateCarUsingID,
-  RemoveCarUsingID,  
-  SearchCarUsingDetails,
-};
+});

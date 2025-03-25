@@ -3,14 +3,14 @@ const jwt = require("jsonwebtoken");
 const users = require("../../Models/UserSchema.js");
 const Cars = require("../../Models/CarsSchema.js");
 const { sendEmail } = require("../../Nodemailer/Mails.js");
-const { CreateToken } = require("../../Middlewares/verifyUser.js");
+const catchAsync = require("../../Middlewares/catchAsync.js");
 const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
 } = require("../../Nodemailer/MailTemplates/Templates.js");
 
 // User Registration :
-const UserRegister = async (req, res) => {
+exports.UserRegister = catchAsync(async (req, res, next) => {
   try {
     const { fullname, email, password, phone, address, account_type } =
       req.body;
@@ -73,10 +73,10 @@ const UserRegister = async (req, res) => {
     console.log(`registration error : ${error}`);
     return res.status(500).json({ RegistrationError: error });
   }
-};
+});
 
 // user registration conformation :
-const ConformUserRegister = async (req, res) => {
+exports.ConformUserRegister = catchAsync(async (req, res, next) => {
   try {
     const { Registertoken } = req.body;
     if (!Registertoken) {
@@ -102,7 +102,7 @@ const ConformUserRegister = async (req, res) => {
         message: "Time expired!!.. please register again",
       });
     }
-    user.status = 'active';
+    user.status = "active";
     user.VerifyToken = undefined;
     user.expiryTime = undefined;
     await user.save();
@@ -115,10 +115,10 @@ const ConformUserRegister = async (req, res) => {
       error: "internal Server error",
     });
   }
-};
+});
 
 //user login using  email and  password :
-const Login = async (req, res) => {
+exports.Login = catchAsync(async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -173,10 +173,10 @@ const Login = async (req, res) => {
       LoginError: error,
     });
   }
-};
+});
 
 //user logout :
-const LogoutUsingCookie = async (req, res) => {
+exports.LogoutUsingCookie = catchAsync(async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {
@@ -193,10 +193,10 @@ const LogoutUsingCookie = async (req, res) => {
     console.log(error);
     res.status(500).json({ LogoutError: error });
   }
-};
+});
 
 //get user profile by user ID and only when the user is active :
-const getProfile = async (req, res) => {
+exports.getProfile = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -209,10 +209,10 @@ const getProfile = async (req, res) => {
       error: `NotGettingProfile ${error}`,
     });
   }
-};
+});
 
 //sending forget password link to the user email :
-const forgetPassword = async (req, res) => {
+exports.forgetPassword = catchAsync(async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -235,10 +235,10 @@ const forgetPassword = async (req, res) => {
     console.log(error);
     return res.status(500).json({ forgetPassword: error });
   }
-};
+});
 
 //user reset password :  No Authentication required :
-const resetPassword = async (req, res) => {
+exports.resetPassword = catchAsync(async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
@@ -266,10 +266,10 @@ const resetPassword = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: error });
   }
-};
+});
 
 //get user profile by id within in the user expire time :
-const GetProfileById = async (req, res) => {
+exports.GetProfileById = catchAsync(async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
@@ -279,10 +279,10 @@ const GetProfileById = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: error });
   }
-};
+});
 
 //update user profile based on cookie :
-const UpdateUserProfile = async (req, res) => {
+exports.UpdateUserProfile = catchAsync(async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
@@ -303,10 +303,10 @@ const UpdateUserProfile = async (req, res) => {
     console.log(error);
     return res.status(500).json({ error: error });
   }
-};
+});
 
 //Delete user account based on the cookie :
-const DeleteUserAccount = async (req, res) => {
+exports.DeleteUserAccount = catchAsync(async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
@@ -330,17 +330,4 @@ const DeleteUserAccount = async (req, res) => {
     console.log(error);
     return res.status(500).json({ error });
   }
-};
-
-module.exports = {
-  UserRegister,
-  ConformUserRegister,
-  Login,
-  getProfile,
-  forgetPassword,
-  LogoutUsingCookie,
-  resetPassword,
-  GetProfileById,
-  UpdateUserProfile,
-  DeleteUserAccount,
-};
+});
