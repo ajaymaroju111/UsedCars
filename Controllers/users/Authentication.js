@@ -4,7 +4,7 @@ const users = require("../../Models/UserSchema.js");
 const Cars = require("../../Models/CarsSchema.js");
 const { sendEmail } = require("../../Nodemailer/Mails.js");
 const catchAsync = require("../../Middlewares/catchAsync.js");
-const ErrorHandler = require('../../utils/ErrorHandler.js')
+const ErrorHandler = require("../../utils/ErrorHandler.js");
 const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
@@ -28,17 +28,24 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
         .json({ error: "All fields are required for the registration" });
     }
     //Search for the user in the DB :
-    const isUser = await users.findOne({ 
-      $or:[{email} , {username}]
+    const isUser = await users.findOne({
+      $or: [{ email }, { username }],
     });
     if (isUser) {
-      if(user.username === username){
-        return next(new ErrorHandler("Username already taken , try another username ", 401));
+      if (user.username === username) {
+        return next(
+          new ErrorHandler(
+            "Username already taken , try another username ",
+            401
+          )
+        );
       }
-      return next(new ErrorHandler("Email already exists","please login ", 401));
+      return next(
+        new ErrorHandler("Email already exists", "please login ", 401)
+      );
     }
-    const SaltRounds = await bcrypt.genSalt(10);
-    const HashedPassword = await bcrypt.hash(password, SaltRounds);
+    // const SaltRounds = await bcrypt.genSalt(10);
+    // const HashedPassword = await bcrypt.hash(password, SaltRounds);
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
@@ -52,7 +59,7 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
       },
       username,
       email,
-      password: HashedPassword,
+      password,
       phone,
       phone,
       address,
@@ -60,7 +67,7 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
     });
     await user.save();
     const combinedString = `${email}:${username}`;
-    const encodedEmail = Buffer.from(combinedString,'utf-8');
+    const encodedEmail = Buffer.from(combinedString, "utf-8");
     await sendEmail({
       to: user.email,
       subject: "Account Conformation for UsedCars Platform",
@@ -93,15 +100,12 @@ exports.ConformUserAccount = catchAsync(async (req, res, next) => {
     //check weather the users  exist or not :
     const user = await users.findOne({ email: decodedEmail });
     if (!user) {
-      return next(new ErrorHandler("User not found, please register" , 404));
+      return next(new ErrorHandler("User not found, please register", 404));
     }
     //check weather the time expired or not :
     if (Date.now() > user.expiryTime) {
       await users.deleteOne({ email: decodedEmail });
-      console.log("data deleted");
-      return res.status(401).json({
-        message: "Time expired!!.. please register again",
-      });
+      return next(new ErrorHandler("Time expired , please Register", 401));
     }
     user.status = "active";
     user.VerifyToken = undefined;
@@ -136,17 +140,19 @@ exports.loginUser = catchAsync(async (req, res, next) => {
 
     //chack weather the user is active or not :
     if (!(user.status === "active")) {
-      return next(new ErrorHandler("account is not verified , please verify" , 401));
+      return next(
+        new ErrorHandler("account is not verified , please verify", 401)
+      );
     }
     //compare the password :
-    const pass = await bcrypt.compare(password, user.password);
-    if (!pass) {
-      return res.status(400).json({ IncorrectPassword: `incorrect password` });
+    const isPasswordMatched = await user.comparePassword(password);
+    if (!isPasswordMatched) {
+      return next(new ErrorHandler("password doesn't match", 401));
     }
     //create a token :
     const data = {
       id: user._id,
-      username : user.username,
+      username: user.username,
       email: user.email,
       status: user.status,
     };
@@ -177,12 +183,12 @@ exports.loginUser = catchAsync(async (req, res, next) => {
 
 //user logout :
 exports.LogoutUser = catchAsync(async (req, res, next) => {
-    res.clearCookie("token" ,{
-      httpOnly: true,
-      secure: true, // Use only in HTTPS
-      sameSite: "Strict",
-    });
-    res.json({ message: "User logged out successfully" });
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true, // Use only in HTTPS
+    sameSite: "Strict",
+  });
+  res.json({ message: "User logged out successfully" });
 });
 
 //get user profile by user ID and only when the user is active :
@@ -190,7 +196,7 @@ exports.getUserProfile = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
-      return next(new ErrorHandler("cookie expired , please login" , 404));
+      return next(new ErrorHandler("cookie expired , please login", 404));
     }
     res.status(200).json(user.fullname);
   } catch (error) {
@@ -202,7 +208,7 @@ exports.getUserProfile = catchAsync(async (req, res, next) => {
 });
 
 //sending forget password link to the user email :
-exports.forgetPassword = catchAsync(async (req, res , next) => {
+exports.forgetPassword = catchAsync(async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -210,7 +216,9 @@ exports.forgetPassword = catchAsync(async (req, res , next) => {
     }
     const user = await users.findOne({ email });
     if (!user) {
-      return next( new ErrorHandler("User not found , please Enter valid email"));
+      return next(
+        new ErrorHandler("User not found , please Enter valid email")
+      );
     }
     await sendEmail({
       to: user.email,
@@ -226,11 +234,11 @@ exports.forgetPassword = catchAsync(async (req, res , next) => {
 });
 
 //user reset password :  No Authentication required :
-exports.resetPassword = catchAsync(async (req, res , next) => {
+exports.resetPassword = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
-      return next(new ErrorHandler("cookie expired , please login" , 404));
+      return next(new ErrorHandler("cookie expired , please login", 404));
     }
     const { oldPassword, newPassword } = req.body;
     if (!oldPassword || !newPassword) {
@@ -257,24 +265,20 @@ exports.resetPassword = catchAsync(async (req, res , next) => {
 });
 
 //get user profile by id within in the user expire time :
-exports.getProfileById = catchAsync(async (req, res , next) => {
-  try {
-    const user = req.user;
-    if (!user) {
-      return next(new ErrorHandler("cookie expired , please login" , 404));
-    }
-    return res.status(200).json(user.fullname);
-  } catch (error) {
-    return res.status(500).json({ error: error });
+exports.getProfileById = catchAsync(async (req, res, next) => {
+  const user = req.user;
+  if (!user) {
+    return next(new ErrorHandler("cookie expired , please login", 404));
   }
+  return res.status(200).json(user.fullname);
 });
 
 //update user profile based on cookie :
-exports.UpdateProfile = catchAsync(async (req, res , next) => {
+exports.UpdateProfile = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
-      return next(new ErrorHandler("cookie expired , please login" , 404));
+      return next(new ErrorHandler("cookie expired , please login", 404));
     }
     const { newemail, newpassword } = req.body;
     if (newemail) {
@@ -294,20 +298,18 @@ exports.UpdateProfile = catchAsync(async (req, res , next) => {
 });
 
 //Delete user account based on the cookie :
-exports.deleteProfile = catchAsync(async (req, res , next) => {
+exports.deleteProfile = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
-      return next(new ErrorHandler("cookie expired , please login" , 404));
+      return next(new ErrorHandler("cookie expired , please login", 404));
     }
     await users.findByIdAndDelete(user._id);
     await Cars.deleteMany({ owner_id: id });
-    return res.status(200).json(
-      {
-        success: true,
-        message : "user Deleted Successfully",
-      }
-    );
+    return res.status(200).json({
+      success: true,
+      message: "user Deleted Successfully",
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error });

@@ -3,7 +3,7 @@ require("dotenv").config();
 const users = require("../Models/UserSchema.js");
 const catchAsync = require("./catchAsync.js");
 
-exports.verifyUserUsingCookie = catchAsync(async (req, res, next) => {
+exports.verifyUser = catchAsync(async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {

@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const { Buffer } = require("buffer");
+const bcrypt = require('bcrypt')
 
-const userData = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
     profileImage: {
       name: String,
@@ -12,30 +13,31 @@ const userData = new mongoose.Schema(
     },
     username: {
       type: String,
-      required: true,
+      required: [true , "please enter the username"],
       trim: true,
       maxlength: 50,
       unique : true,
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
+      required: [true , "please enter email"],
+      unique: [true , "Email already exist"],
       trim: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
     },
     password: {
       type: String,
-      required: true,
-      minlength: 8,
+      required: [true , "please Enter the password"],
+      minlength: [8 , "password must be above 8 characters"],
+      select : true,
     },
     phone: {
       type: String,
     },
     address: {
       type: String,
-      required: true,
+      required: [true , "Please Enter your address"],
     },
     account_type: {
       type: String,
@@ -46,10 +48,6 @@ const userData = new mongoose.Schema(
       type: String,
       enum: ["active", "inactive"],
       default: "inactive",
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
     },
     number_of_uploads: {
       type: Number,
@@ -71,4 +69,15 @@ const userData = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("users", userData);
+UserSchema.methods.comparePassword = function (enteredPassword) {
+  return bcrypt.compare(enteredPassword, this.password);
+};
+
+UserSchema.pre("save", async function (next) {
+  if(this.isModified('password')){
+    this.password = bcrypt.hash(this.password , 10)
+  }
+  next();
+})
+
+module.exports = mongoose.model("users", UserSchema);

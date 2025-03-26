@@ -4,7 +4,7 @@ const catchAsync = require('../../Middlewares/catchAsync.js');
 const dotenv = require("dotenv").config();
 
 //Deactivate user
-exports.setInactiveAccount = catchAsync ( async (req, res , next) => {
+exports.deactivateUser = catchAsync ( async (req, res , next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -41,7 +41,7 @@ exports.setInactiveAccount = catchAsync ( async (req, res , next) => {
 });
 
 //manage post limit for the user : 
-exports.manageUsersPostCount = catchAsync ( async(req , res , next) =>{
+exports.setPostLimit = catchAsync ( async(req , res , next) =>{
   try {
     const user = req.user;
     if (!user) {
@@ -80,7 +80,7 @@ exports.manageUsersPostCount = catchAsync ( async(req , res , next) =>{
 });
 
 //view all active and inactive users : 
-exports.viewAllActiveAndInactiveUsers = catchAsync ( async(req , res , next) =>{
+exports.allUserTypes = catchAsync ( async(req , res , next) =>{
   try {
     const user = req.user;
     if (!user) {
@@ -119,7 +119,7 @@ exports.viewAllActiveAndInactiveUsers = catchAsync ( async(req , res , next) =>{
 });
 
 //update Subscription type and
-exports.changeUserSubscriptionType = catchAsync( async (req, res , next) => {
+exports.userPlan = catchAsync( async (req, res , next) => {
   try {
     const user = req.user;
     if (!user) {
@@ -172,7 +172,7 @@ exports.changeUserSubscriptionType = catchAsync( async (req, res , next) => {
 });
 
 //Read the user Details based on their ID :
-exports.viewAllPostsOfaUserUsingId = catchAsync( async (req, res , next) => {
+exports.userPosts = catchAsync( async (req, res , next) => {
   try {
     const user = req.user;
     const userId = req.headers["authentication"];

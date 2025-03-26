@@ -1,14 +1,11 @@
-const cars = require("../../Models/CarsSchema.js");
+const Cars = require("../../Models/CarsSchema.js");
 const catchAsync = require("../../Middlewares/catchAsync.js");
 
 //create a car Using Car Details :
-exports.createCarOnAdminAccount = catchAsync(async (req, res, next) => {
+exports.createPost = catchAsync(async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
-    }
-    if (!(user.account_type === "admin")) {
+    
+    if (!(req.user.account_type === "admin")) {
       return res.status(401).json({
         message: "you are not authorized for this operation",
       });
@@ -68,7 +65,7 @@ exports.createCarOnAdminAccount = catchAsync(async (req, res, next) => {
       location,
       carImages: carImages, // Use the prepared images array
       description,
-      owner_id: user._id,
+      owner_id: req.user._id,
     });
     // Save the car instance
     await cars.save();
@@ -85,13 +82,9 @@ exports.createCarOnAdminAccount = catchAsync(async (req, res, next) => {
 });
 
 //Read Car Details using car Id :
-exports.readCarDetailsUsingCarId = catchAsync(async (req, res, next) => {
+exports.getCatById = catchAsync(async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
-    }
-    if (!(user.account_type === "admin")) {
+    if (!(req.user.account_type === "admin")) {
       return res.status(401).json({
         message: "you are not authorized for this operation",
       });
@@ -120,29 +113,20 @@ exports.readCarDetailsUsingCarId = catchAsync(async (req, res, next) => {
 });
 
 //updata a car using Car ID :
-exports.updateanyDetailsUsingCarId = catchAsync(async (req, res, next) => {
+exports.updatePost = catchAsync(async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
-    }
-    if (!(user.account_type === "admin")) {
+    if (!(req.user.account_type === "admin")) {
       return res.status(401).json({
         message: "you are not authorized for this operation",
       });
     }
     const { carId, newprice } = req.body;
-    if (!carId) {
+    if (!carId || newprice) {
       return res.status(401).json({
-        message: "carId not Rceived",
+        message: "All fields are required",
       });
     }
-    const carPost = await cars.findById(carId);
-    if (!carPost) {
-      return res.status(401).json({
-        message: "No Posts are found on this ID",
-      });
-    }
+    const carPost = await Cars.findById(carId);
     carPost.price = newprice;
     await carPost.save();
     console.log("car post updated successfully");

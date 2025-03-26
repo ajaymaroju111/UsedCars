@@ -1,26 +1,16 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const mongoose = require("mongoose");
 const catchAsync = require("../../Middlewares/catchAsync.js");
-const users = require("../../Models/UserSchema.js");
+const ErrorHandler = require("../../utils/ErrorHandler.js");
 dotenv.config();
 const Cars = require("../../Models/CarsSchema.js");
 
 // Create a new car listing :
-exports.uploadNewCar = catchAsync(async (req, res, next) => {
-  const user = req.user;
-  if (!user) {
-    return res.status(404).json({ NoUserExist: "User not received" });
-  }
-
-  console.log(user.number_of_uploads, user.post_limit);
-  if (user.number_of_uploads >= user.post_limit) {
-    console.log("Upload limit exceeded, purchase any plan for further uploads");
-    return res.status(402).json({
-      message: "Upload limit exceeded, purchase any plan for further uploads",
-    });
-  }
+exports.uploadpost = catchAsync(async (req, res, next) => {
   try {
+    if (req.user.number_of_uploads >= req.user.post_limit) {
+      return next(new ErrorHandler("your post limit has exceeded", 401));
+    }
     const {
       brand,
       model,
@@ -49,13 +39,10 @@ exports.uploadNewCar = catchAsync(async (req, res, next) => {
     ) {
       return res.status(400).json({ error: "All fields are required!" });
     }
-
     // Check if files are uploaded
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
     }
-    console.log(req.files);
-    // Prepare images for storage
     const carImages = req.files.map((file) => ({
       name: file.originalname,
       img: {
@@ -77,17 +64,12 @@ exports.uploadNewCar = catchAsync(async (req, res, next) => {
       location,
       carImages: carImages, // Use the prepared images array
       description,
-      owner_id: user._id,
+      owner_id: req.user._id,
     });
-
     // Save the car instance
     await cars.save();
-    console.log(cars.carImages);
-
-    // Update the user's number of uploads
-    user.number_of_uploads += 1;
-    await user.save();
-
+    req.user.number_of_uploads += 1;
+    await req.user.save();
     return res.status(201).json({ Success: "Car post added successfully" });
   } catch (error) {
     console.log(error);
@@ -96,36 +78,22 @@ exports.uploadNewCar = catchAsync(async (req, res, next) => {
 });
 
 // Get the list of all cars :
-exports.GetAllCarsList = catchAsync(async (req, res, next) => {
-  try {
-    const cars = await Cars.find({});
-    return res.status(200).json({ cars });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ DisplayCarsError: error.message });
-  }
+exports.getAllPosts = catchAsync(async (req, res, next) => {
+  const cars = await Cars.find();
+  return res.status(200).json({ cars });
 });
 
 // Get a specific car details based on ID :
-exports.GetSpecificCarsById = catchAsync(async (req, res, next) => {
+exports.getPostById = catchAsync(async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
-    }
     const carid = req.headers["authentication"];
     if (!carid) {
       return res.status(401).json({
         error: "car id not Found",
       });
     }
-    const car = await Cars.findById(carid);
-    if (!car) {
-      return res
-        .status(404)
-        .json({ error: "No car found with the requested ID" });
-    }
-    res.status(200).json({ car });
+    const cars = await Cars.findById(carid);
+    res.status(200).json({ cars });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error" });
@@ -133,14 +101,9 @@ exports.GetSpecificCarsById = catchAsync(async (req, res, next) => {
 });
 
 // Update a car by using car ID :
-exports.UpdateCarUsingID = catchAsync(async (req, res, next) => {
+exports.updatePost = catchAsync(async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
-    }
     const { carId, newprice } = req.body;
-
     if (!carId || !newprice) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -148,19 +111,15 @@ exports.UpdateCarUsingID = catchAsync(async (req, res, next) => {
     if (isNaN(Number(newprice))) {
       return res.status(400).json({ error: "Invalid price value" });
     }
-
     const car = await Cars.findById(carId);
-    if (!car) {
-      return res.status(404).json({ error: "Data not Found" });
-    }
-    if (!user._id.equals(car.owner_id)) {
-      return res.status(401).json({ message: "You are not authorized" });
+    if (!req.user._id.equals(car.owner_id)) {
+      return next(new ErrorHandler("You are not Authorized", 401));
     }
     car.price = newprice;
     await car.save();
     res.status(200).json({
-      YourCar: car.brand,
-      newprice: car.price,
+      Success : true,
+      message : `car price updated successfully to : ${car.price}`,
     });
   } catch (error) {
     console.log(error);
@@ -169,32 +128,21 @@ exports.UpdateCarUsingID = catchAsync(async (req, res, next) => {
 });
 
 // Remove a car from the listing :
-exports.RemoveCarUsingID = catchAsync(async (req, res, next) => {
+exports.deletePost = catchAsync(async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
-    }
     const carid = req.headers["authentication"];
     if (!carid) {
       return res.status(400).json({ error: "ID not found in the params" });
     }
     const car = await Cars.findById(carid);
-    if (!car) {
-      return res.status(404).json({ error: "Car not found" });
+    if (!(req.user._id == car.owner_id)) {
+      return next(new ErrorHandler("You are not Authorized", 401));
     }
-    if (!(user._id == car.owner_id)) {
-      return res.status(401).json({
-        message: "you are not authorized",
-      });
-    }
-    const toDelete = await Cars.findByIdAndDelete(carid);
-    if (!toDelete) {
-      return res.status(401).json({
-        message: "Can't find a car on this ID",
-      });
-    }
-    return res.status(200).json({ Success: "Car data deleted successfully" });
+    await Cars.findByIdAndDelete(carid);
+    return res.status(200).json({
+      Success: true,
+      message: "post Deleted Successfully",
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: error.message });
@@ -202,32 +150,23 @@ exports.RemoveCarUsingID = catchAsync(async (req, res, next) => {
 });
 
 // Search car based on the brand, model, price, location :
-exports.SearchCarUsingDetails = catchAsync(async (req, res, next) => {
-  const { brand, model, price, location } = req.headers;
-  console.log(brand, model, price, location);
-  try {
-    let filters = {};
-    // All the filters conditions : Case-insensitive search
-    if (model) filters.model = { $regex: model, $options: "i" };
-    if (brand) filters.brand = { $regex: brand, $options: "i" };
-    if (location) filters.location = { $regex: location, $options: "i" };
-    if (price) {
-      const parsedPrice = Number(price);
-      if (!isNaN(parsedPrice)) {
-        filters.price = parsedPrice;
-      } else {
-        return res.status(400).json({ error: "Invalid price value" });
-      }
+exports.searchPost = catchAsync(async (req, res, next) => {
+  if (req.query.keyword) {
+    const cars = await Cars.find({
+      $or: [
+        { model: { $regex: req.query.keyword, $options: "i" } },
+        { brand: { $regex: req.query.keyword, $options: "i" } },
+        { location: { $regex: req.query.keyword, $options: "i" } },
+      ],
+    });
+    if (!isNaN(Number(req.query.keyword))) {
+      cars.push(...(await Cars.find({ price: Number(req.query.keyword) })));
     }
-    const cars = await Cars.find(filters);
-    if (cars.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "No cars found matching the criteria" });
-    }
-    res.status(200).json({ cars });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ filterError: "Internal Server Error" });
+    res.status(200).json({
+      Success: true,
+      cars,
+    });
+  } else {
+    return res.status(400).json({ error: "keyword is Required" });
   }
 });
