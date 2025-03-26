@@ -11,7 +11,7 @@ const {
 } = require("../../Nodemailer/MailTemplates/Templates.js");
 
 // User Registration :
-exports.UserRegister = catchAsync(async (req, res, next) => {
+exports.signUpUser = catchAsync(async (req, res, next) => {
   try {
     const { username, email, password, phone, address, account_type } =
       req.body;
@@ -35,7 +35,7 @@ exports.UserRegister = catchAsync(async (req, res, next) => {
       if(user.username === username){
         return next(new ErrorHandler("Username already taken , try another username ", 401));
       }
-      return next(new ErrorHandler("Email already exists", 401));
+      return next(new ErrorHandler("Email already exists","please login ", 401));
     }
     const SaltRounds = await bcrypt.genSalt(10);
     const HashedPassword = await bcrypt.hash(password, SaltRounds);
@@ -79,7 +79,7 @@ exports.UserRegister = catchAsync(async (req, res, next) => {
 });
 
 // user registration conformation :
-exports.ConformUserRegister = catchAsync(async (req, res, next) => {
+exports.ConformUserAccount = catchAsync(async (req, res, next) => {
   try {
     const { Registertoken } = req.body;
     if (!Registertoken) {
@@ -89,13 +89,11 @@ exports.ConformUserRegister = catchAsync(async (req, res, next) => {
       });
     }
     //decode the email using Buffer:
-    const decodedEmail = R.from(Registertoken, "base64").toString("utf8");
+    const decodedEmail = Registertoken.toString("utf8");
     //check weather the users  exist or not :
     const user = await users.findOne({ email: decodedEmail });
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+      return next(new ErrorHandler("User not found, please register" , 404));
     }
     //check weather the time expired or not :
     if (Date.now() > user.expiryTime) {
@@ -121,7 +119,7 @@ exports.ConformUserRegister = catchAsync(async (req, res, next) => {
 });
 
 //user login using  email and  password :
-exports.Login = catchAsync(async (req, res, next) => {
+exports.loginUser = catchAsync(async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -138,9 +136,7 @@ exports.Login = catchAsync(async (req, res, next) => {
 
     //chack weather the user is active or not :
     if (!(user.status === "active")) {
-      return res
-        .status(401)
-        .json({ message: "user is not active please verify the email" });
+      return next(new ErrorHandler("account is not verified , please verify" , 401));
     }
     //compare the password :
     const pass = await bcrypt.compare(password, user.password);
@@ -150,6 +146,7 @@ exports.Login = catchAsync(async (req, res, next) => {
     //create a token :
     const data = {
       id: user._id,
+      username : user.username,
       email: user.email,
       status: user.status,
     };
@@ -179,31 +176,21 @@ exports.Login = catchAsync(async (req, res, next) => {
 });
 
 //user logout :
-exports.LogoutUsingCookie = catchAsync(async (req, res, next) => {
-  try {
-    const { token } = req.cookies;
-    if (!token) {
-      return res.status(401).json({ invalidToken: "invalid Token" });
-    }
-    console.log(token);
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res.status(401).json({ NotValid: "token is not Correct" });
-    }
-    res.clearCookie("token"); // Clear the authentication token
+exports.LogoutUser = catchAsync(async (req, res, next) => {
+    res.clearCookie("token" ,{
+      httpOnly: true,
+      secure: true, // Use only in HTTPS
+      sameSite: "Strict",
+    });
     res.json({ message: "User logged out successfully" });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ LogoutError: error });
-  }
 });
 
 //get user profile by user ID and only when the user is active :
-exports.getProfile = catchAsync(async (req, res, next) => {
+exports.getUserProfile = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
+      return next(new ErrorHandler("cookie expired , please login" , 404));
     }
     res.status(200).json(user.fullname);
   } catch (error) {
@@ -215,7 +202,7 @@ exports.getProfile = catchAsync(async (req, res, next) => {
 });
 
 //sending forget password link to the user email :
-exports.forgetPassword = catchAsync(async (req, res) => {
+exports.forgetPassword = catchAsync(async (req, res , next) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -223,9 +210,7 @@ exports.forgetPassword = catchAsync(async (req, res) => {
     }
     const user = await users.findOne({ email });
     if (!user) {
-      return res.status(400).json({
-        message: "User doesnot Exist !!..   please Register",
-      });
+      return next( new ErrorHandler("User not found , please Enter valid email"));
     }
     await sendEmail({
       to: user.email,
@@ -241,11 +226,11 @@ exports.forgetPassword = catchAsync(async (req, res) => {
 });
 
 //user reset password :  No Authentication required :
-exports.resetPassword = catchAsync(async (req, res) => {
+exports.resetPassword = catchAsync(async (req, res , next) => {
   try {
     const user = req.user;
     if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
+      return next(new ErrorHandler("cookie expired , please login" , 404));
     }
     const { oldPassword, newPassword } = req.body;
     if (!oldPassword || !newPassword) {
@@ -272,11 +257,11 @@ exports.resetPassword = catchAsync(async (req, res) => {
 });
 
 //get user profile by id within in the user expire time :
-exports.GetProfileById = catchAsync(async (req, res) => {
+exports.getProfileById = catchAsync(async (req, res , next) => {
   try {
     const user = req.user;
     if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
+      return next(new ErrorHandler("cookie expired , please login" , 404));
     }
     return res.status(200).json(user.fullname);
   } catch (error) {
@@ -285,11 +270,11 @@ exports.GetProfileById = catchAsync(async (req, res) => {
 });
 
 //update user profile based on cookie :
-exports.UpdateUserProfile = catchAsync(async (req, res) => {
+exports.UpdateProfile = catchAsync(async (req, res , next) => {
   try {
     const user = req.user;
     if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
+      return next(new ErrorHandler("cookie expired , please login" , 404));
     }
     const { newemail, newpassword } = req.body;
     if (newemail) {
@@ -309,26 +294,20 @@ exports.UpdateUserProfile = catchAsync(async (req, res) => {
 });
 
 //Delete user account based on the cookie :
-exports.DeleteUserAccount = catchAsync(async (req, res) => {
+exports.deleteProfile = catchAsync(async (req, res , next) => {
   try {
     const user = req.user;
     if (!user) {
-      return res.status(404).json({ NoUserExist: "User not recieved" });
+      return next(new ErrorHandler("cookie expired , please login" , 404));
     }
-    const id = user._id;
-    const target = await users.findByIdAndDelete(id);
-    if (!target) {
-      return res
-        .status(404)
-        .json({ message: "error occured in deleting the account" });
-    }
-    const isPostDeleted = await Cars.deleteMany({ owner_id: id });
-    if (!isPostDeleted) {
-      return res.status(401).json({
-        message: "error occured in Post delete operation",
-      });
-    }
-    return res.status(200).json({ success: "user deleted Successfully" });
+    await users.findByIdAndDelete(user._id);
+    await Cars.deleteMany({ owner_id: id });
+    return res.status(200).json(
+      {
+        success: true,
+        message : "user Deleted Successfully",
+      }
+    );
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error });
