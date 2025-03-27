@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema(
     },
     username: {
       type: String,
-      // required: [true , "please enter the username"],
+      required: [true , "please enter the username"],
       trim: true,
       maxlength: 50,
       unique : true,
