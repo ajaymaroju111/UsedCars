@@ -21,5 +21,4 @@ router.route('/filter').get(searchPost);
 router.route('/:id').get(verifyUser, getPostById).put(verifyUser, updatePost).delete(verifyUser, deletePost);
 router.route('/').post(uploadMultiple, verifyUser, uploadpost).get(getAllPosts);
 
-
 module.exports = router;

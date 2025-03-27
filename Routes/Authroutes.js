@@ -14,6 +14,7 @@ const {
   getProfileById,
   UpdateProfile,
   deleteProfile,
+  userPosts,
 } = require('../Controllers/users/Authentication.js');
 const {verifyUser} = require('../Middlewares/verifyUser.js');
 router.use(cookieParser());
@@ -26,6 +27,7 @@ router.route('/logout').post(LogoutUser);
 router.route('/me').get(verifyUser ,getUserProfile);
 router.route('/forget-password').post(forgetPassword);
 router.route('/reset-password').post(verifyUser ,resetPassword);
+router.route('/allposts').get(verifyUser, userPosts);
 router.route('/:id').get(verifyUser ,getProfileById).put(verifyUser ,UpdateProfile).delete(verifyUser ,deleteProfile);
 
 

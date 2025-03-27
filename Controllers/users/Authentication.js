@@ -291,6 +291,19 @@ exports.UpdateProfile = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.userPosts = catchAsync(async (req , res, next) =>{
+  const posts = await Cars.find({owner_id : req.user._id});
+  if(posts.length === 0){
+    return res.status(201).json({
+      message : "No posts has been uploaded"
+    });
+  }
+  return res.status(200).json({
+    success : true,
+    posts,
+  })
+})
+
 //Delete user account based on the cookie :
 exports.deleteProfile = catchAsync(async (req, res, next) => {
   try {
