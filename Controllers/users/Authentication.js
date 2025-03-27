@@ -32,7 +32,7 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
       $or: [{ email }, { username }],
     });
     if (isUser) {
-      if (user.username === username) {
+      if (isUser.username === username) {
         return next(
           new ErrorHandler(
             "Username already taken , try another username ",
@@ -66,8 +66,8 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
       account_type,
     });
     await user.save();
-    const combinedString = `${email}:${username}`;
-    const encodedEmail = Buffer.from(combinedString, "utf-8");
+    
+    const encodedEmail = Buffer.from(email, "utf-8").toString("base64");
     await sendEmail({
       to: user.email,
       subject: "Account Conformation for UsedCars Platform",
@@ -96,7 +96,7 @@ exports.ConformUserAccount = catchAsync(async (req, res, next) => {
       });
     }
     //decode the email using Buffer:
-    const decodedEmail = Registertoken.toString("utf8");
+    const decodedEmail = Buffer.from(Registertoken, "base64").toString("utf-8");
     //check weather the users  exist or not :
     const user = await users.findOne({ email: decodedEmail });
     if (!user) {
@@ -236,30 +236,24 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 //user reset password :  No Authentication required :
 exports.resetPassword = catchAsync(async (req, res, next) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return next(new ErrorHandler("cookie expired , please login", 404));
-    }
     const { oldPassword, newPassword } = req.body;
     if (!oldPassword || !newPassword) {
       return res
         .status(401)
         .json({ required: "old password and new password are required" });
     }
-    const isPass = await bcrypt.compare(oldPassword, user.password);
-    if (!isPass) {
-      return res
-        .status(400)
-        .json({ PasswordDoesnotMatch: "old password does not match" });
+    const user = await users.findById(req.user._id).select('+password')
+    const isPasswordMatched = await user.comparePassword(oldPassword, user.password);
+    if (!isPasswordMatched) {
+      return next(new ErrorHandler("password doesn't Match", 401));
     }
-    const SaltRounds = bcrypt.genSaltSync(10);
-    const newHashedpassword = await bcrypt.hash(newPassword, SaltRounds);
-    user.password = newHashedpassword;
+    user.password = newPassword;
     await user.save();
     return res
       .status(200)
       .json({ successful: "password updated Successfully" });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ error: error });
   }
 });

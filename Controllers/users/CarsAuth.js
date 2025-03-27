@@ -83,6 +83,37 @@ exports.getAllPosts = catchAsync(async (req, res, next) => {
   return res.status(200).json({ cars });
 });
 
+// Search car based on the brand, model, price, location :
+exports.searchPost = catchAsync(async (req, res, next) => {
+    try {
+      const { model, price, brand, location } = req.query;
+    console.log('Filter parameters:', { model, price, brand, location });
+
+    // Build filters dynamically
+    let filters = {};
+
+    if (model) filters.model = { $regex: model, $options: 'i' };
+    if (brand) filters.brand = { $regex: brand, $options: 'i' };
+    if (location) filters.location = { $regex: location, $options: 'i' };
+
+    if (price) {
+      const parsedPrice = Number(price);
+      if (isNaN(parsedPrice)) {
+        return res.status(400).json({ error: 'Invalid price value' });
+      }
+      filters.price = parsedPrice;
+    }
+
+    // Fetch cars with applied filters
+    const cars = await Cars.find(filters);
+
+    return res.status(200).json({ success: true, cars });
+    } catch (error) {
+      console.error('Error fetching cars:', error);
+      return res.status(500).json({ error: error.message });
+    }
+});
+
 // Get a specific car details based on ID :
 exports.getPostById = catchAsync(async (req, res, next) => {
   try {
@@ -149,24 +180,3 @@ exports.deletePost = catchAsync(async (req, res, next) => {
   }
 });
 
-// Search car based on the brand, model, price, location :
-exports.searchPost = catchAsync(async (req, res, next) => {
-  if (req.query.keyword) {
-    const cars = await Cars.find({
-      $or: [
-        { model: { $regex: req.query.keyword, $options: "i" } },
-        { brand: { $regex: req.query.keyword, $options: "i" } },
-        { location: { $regex: req.query.keyword, $options: "i" } },
-      ],
-    });
-    if (!isNaN(Number(req.query.keyword))) {
-      cars.push(...(await Cars.find({ price: Number(req.query.keyword) })));
-    }
-    res.status(200).json({
-      Success: true,
-      cars,
-    });
-  } else {
-    return res.status(400).json({ error: "keyword is Required" });
-  }
-});

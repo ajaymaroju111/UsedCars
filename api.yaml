@@ -1,6 +1,7 @@
 openapi: "3.1.0"
 security:
   - CookieAuth: []
+  - ApiKeyAuth: []
 tags:
   - name: Users
     description: Operations related to customers
@@ -50,7 +51,7 @@ paths:
             schema:
               type: object
               properties:
-                fullname:
+                username:
                   type: string
                   description: Full name of the user
                   example: Maroju Ajay
@@ -387,7 +388,7 @@ paths:
       tags:
         - Users
       security:
-        - ApiKeyAuth: []
+        - CookieAuth: []
       responses:
         '200':
           description: User data retrieved successfully
@@ -775,69 +776,55 @@ paths:
 
   /api/cars/filter:
     get:
-      summary: Search for cars
-      description: Retrieve a list of cars based on search filters such as brand, model, location, and price provided in headers.
-      tags:
-        - Cars
+      summary: Filter cars based on brand, model, price, and location
       security:
-        - CookieAuth: []
+        - bearerAuth: []
       parameters:
-        - name: brand
-          in: header
-          required: false
-          description: The brand of the car to search for.
+        - in: query
+          name: brand
           schema:
             type: string
-        - name: model
-          in: header
-          required: false
-          description: The model of the car to search for.
+          description: Filter cars by brand
+        - in: query
+          name: model
           schema:
             type: string
-        - name: location
-          in: header
-          required: false
-          description: The location where the car is available.
-          schema:
-            type: string
-        - name: price
-          in: header
-          required: false
-          description: The price of the car to search for (numeric).
+          description: Filter cars by model
+        - in: query
+          name: price
           schema:
             type: number
-            format: float
+          description: Filter cars by price
+        - in: query
+          name: location
+          schema:
+            type: string
+          description: Filter cars by location
       responses:
         '200':
-          description: A list of cars matching the search criteria.
+          description: List of filtered cars
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
                   cars:
                     type: array
                     items:
                       type: object
                       properties:
-                        id:
-                          type: string
-                          description: The unique identifier for the car.
-                        brand:
-                          type: string
-                          description: The brand of the car.
                         model:
                           type: string
-                          description: The model of the car.
-                        location:
-                          type: string
-                          description: The location of the car.
                         price:
                           type: number
-                          format: float
-                          description: The price of the car.
+                        brand:
+                          type: string
+                        location:
+                          type: string
         '400':
-          description: No data exists in the database for the given filters.
+          description: Invalid input
           content:
             application/json:
               schema:
@@ -845,17 +832,24 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: No Data Exist on the Database
-        '500':
-          description: Internal server error.
+        '401':
+          description: Unauthorized request
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  filterError:
+                  error:
                     type: string
-                    example: Internal Server Error
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
   /api/cars/:id:
     get:

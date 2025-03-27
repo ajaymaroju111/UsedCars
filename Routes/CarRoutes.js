@@ -17,7 +17,9 @@ router.use(cookieParser());
 const uploadMultiple = upload.array('images', 10); 
 
 //using Routes for the cars : 
-router.route('/').post(uploadMultiple, verifyUser, uploadpost).get(getAllPosts);
+router.route('/filter').get(searchPost);
 router.route('/:id').get(verifyUser, getPostById).put(verifyUser, updatePost).delete(verifyUser, deletePost);
-router.get('/filter', searchPost);
+router.route('/').post(uploadMultiple, verifyUser, uploadpost).get(getAllPosts);
+
+
 module.exports = router;
