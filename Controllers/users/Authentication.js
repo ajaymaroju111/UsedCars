@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const users = require("../../Models/UserSchema.js");
 const Cars = require("../../Models/CarsSchema.js");
+const userChats = require('../../Models/messagesSchema.js');
 const { sendEmail } = require("../../Nodemailer/Mails.js");
 const catchAsync = require("../../Middlewares/catchAsync.js");
 const ErrorHandler = require("../../utils/ErrorHandler.js");
@@ -9,6 +10,8 @@ const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
 } = require("../../Nodemailer/MailTemplates/Templates.js");
+
+
 
 // User Registration :
 exports.signUpUser = catchAsync(async (req, res, next) => {
@@ -75,6 +78,10 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
     });
     user.expiryTime = Date.now() + 10 * 60 * 1000;
     await user.save();
+    const chatbox = await messages.create({
+      email : email
+    })
+    await chatbox.save();
     return res.status(200).json({
       message:
         "user registration conformation has send to the email !!  Please Verify",
@@ -320,5 +327,56 @@ exports.deleteProfile = catchAsync(async (req, res, next) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error });
+  }
+});
+
+//Chat applications  : 
+exports.sendMessage = catchAsync(async(req , res , next) =>{
+  try {
+    const {email , message} = req.body;
+    if(!email || !message){
+      return res.status(400).json({
+        message : "all fields are required",
+      });
+    }
+    const userChat = await messages.findOne({ email });
+    if(!userChat) return res.status(400).json({error : "incorrect email id"});
+    await userChat.sendMessage(req.user._id , message);
+    return res.status(200).json({
+      success : true,
+      message_sent_to : email
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error : "Internal Server Error"
+    });
+  }
+});
+
+exports.userNotifications = catchAsync(async(req , res , next) =>{
+  const email = req.user.email;
+  const me = await userChats.findOne({ email });
+  const [notifications] = me.messages;
+  return res.status(200).json({
+    Notifications : notifications,
+  })
+});
+
+exports.readMessages = catchAsync(async(req , res , next) =>{
+  try {
+    const email = req.user.email;
+    const chats = await userChats.findOne({ email });
+    const content = chats.messages;
+    await chats.markmessagesAsViewed();
+    return res.status(200).json({
+      Notifations : chats.notifications,
+      messages : content
+    });
+  } catch (error) {
+    console.log(error);
+    returnbres.status(500).json({
+      error : "Internal Server Error"
+    });
   }
 });

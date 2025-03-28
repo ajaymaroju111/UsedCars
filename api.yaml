@@ -488,6 +488,166 @@ paths:
                   error:
                     type: string
 
+  /api/admin/messages:
+    post:
+      summary: Send a message to a user
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                message:
+                  type: string
+                  example: "Hello, this is a test message."
+      responses:
+        200:
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message_sent_to:
+                    type: string
+                    example: user@example.com
+        400:
+          description: Bad Request - Missing fields or incorrect email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "all fields are required"
+                  error:
+                    type: string
+                    example: "incorrect email id"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal Server Error"
+    get:
+      summary: Get user notifications
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      responses:
+        200:
+          description: Successfully fetched notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Notifications:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        sender:
+                          type: string
+                          example: "user@example.com"
+                        message:
+                          type: string
+                          example: "You have a new message."
+        401:
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal Server Error" 
+    put:
+      summary: Read user messages and notifications
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      responses:
+        200:
+          description: Successfully fetched messages and notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Notifications:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: "New Message"
+                        content:
+                          type: string
+                          example: "You have a new message."
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        sender:
+                          type: string
+                          example: "user@example.com"
+                        message:
+                          type: string
+                          example: "Hello, how are you?"
+        401:
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal Server Error"
+
   /api/auth/:id:
     put:
       summary: Update User Details

@@ -64,7 +64,7 @@ const UserSchema = new mongoose.Schema(
     },
     expiryTime : {
       type : Date
-    }
+    },
   },
   { timestamps: true }
 );
@@ -79,6 +79,8 @@ UserSchema.pre("save", async function (next) {
   }
   next();
 });
+
+UserSchema
 
 
 module.exports = mongoose.model("users", UserSchema);
