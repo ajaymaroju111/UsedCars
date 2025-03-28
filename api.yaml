@@ -488,7 +488,7 @@ paths:
                   error:
                     type: string
 
-  /api/admin/messages:
+  /api/auth/messages:
     post:
       summary: Send a message to a user
       tags:

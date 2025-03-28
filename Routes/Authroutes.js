@@ -34,6 +34,8 @@ router.route('/allposts').get(verifyUser, userPosts);
 router.route('/messages').post(verifyUser, sendMessage).get(verifyUser, userNotifications).put(verifyUser, readMessages);
 router.route('/:id').get(verifyUser ,getProfileById).put(verifyUser ,UpdateProfile).delete(verifyUser ,deleteProfile);
 
+module.exports = router;
+
 
 
 

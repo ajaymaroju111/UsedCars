@@ -78,8 +78,8 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
     });
     user.expiryTime = Date.now() + 10 * 60 * 1000;
     await user.save();
-    const chatbox = await messages.create({
-      email : email
+    const chatbox = await userChats.create({
+      email : email,
     })
     await chatbox.save();
     return res.status(200).json({
@@ -339,9 +339,9 @@ exports.sendMessage = catchAsync(async(req , res , next) =>{
         message : "all fields are required",
       });
     }
-    const userChat = await messages.findOne({ email });
-    if(!userChat) return res.status(400).json({error : "incorrect email id"});
-    await userChat.sendMessage(req.user._id , message);
+    const chat = await userChats.findOne({ email });
+    if(!chat) return next( new ErrorHandler("Invalid Email" , 401));
+    await chat.sendMessage(req.user._id , message);
     return res.status(200).json({
       success : true,
       message_sent_to : email
@@ -357,9 +357,8 @@ exports.sendMessage = catchAsync(async(req , res , next) =>{
 exports.userNotifications = catchAsync(async(req , res , next) =>{
   const email = req.user.email;
   const me = await userChats.findOne({ email });
-  const [notifications] = me.messages;
   return res.status(200).json({
-    Notifications : notifications,
+    Notifications : me.notifications,
   })
 });
 
@@ -380,3 +379,4 @@ exports.readMessages = catchAsync(async(req , res , next) =>{
     });
   }
 });
+chatbox completed
