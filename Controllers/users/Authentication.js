@@ -10,6 +10,7 @@ const {
   forgetPasswordTemplate,
   AccountConformationafterRegister,
 } = require("../../Nodemailer/MailTemplates/Templates.js");
+const { default: axios } = require("axios");
 
 
 
@@ -377,5 +378,34 @@ exports.readMessages = catchAsync(async(req , res , next) =>{
     returnbres.status(500).json({
       error : "Internal Server Error"
     });
+  }
+});
+
+exports.askMe = catchAsync(async(req , res, next) => {
+  try {
+    const { message } = req.body;
+    if(!message){
+      return next(new ErrorHandler("message can not be empty" , 400));
+    }
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4', // You can use gpt-3.5-turbo or gpt-4
+        messages: [{ role: 'user', content: message }],
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.OPEN_AI_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    const reply = response.data.choices[0].message.content;
+    return res.json({
+      userdCarsAI : reply
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({erro : "Internal Server Error"});
   }
 });
